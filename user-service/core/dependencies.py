@@ -2,11 +2,13 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from redis import Redis
 from sqlalchemy.orm import Session
 
 from core.database import engine, get_db
-from core.redis import redis_client
+from core.redis import get_redis, redis_client
 from models import User
+from repositories.token_repo import TokenRepository
 from repositories.user_repo import UserRepository
 from services.auth_service import AuthService
 from services.health_service import HealthService
@@ -18,23 +20,34 @@ def get_user_repository(db: Annotated[Session, Depends(get_db)]) -> UserReposito
     return UserRepository(db)
 
 
+def get_token_repository(redis: Annotated[Redis, Depends(get_redis)]) -> TokenRepository:
+    return TokenRepository(redis)
+
+
 def get_auth_service(
     user_repo: Annotated[UserRepository, Depends(get_user_repository)],
+    token_repo: Annotated[TokenRepository, Depends(get_token_repository)],
 ) -> AuthService:
-    return AuthService(user_repo)
+    return AuthService(user_repo, token_repo)
 
 
-def get_current_user(
+def get_bearer_token(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
-    auth_service: Annotated[AuthService, Depends(get_auth_service)],
-) -> User:
+) -> str:
     if credentials is None:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             "Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return auth_service.get_user_from_token(credentials.credentials)
+    return credentials.credentials
+
+
+def get_current_user(
+    token: Annotated[str, Depends(get_bearer_token)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+) -> User:
+    return auth_service.get_user_from_token(token)
 
 
 def get_health_service() -> HealthService:

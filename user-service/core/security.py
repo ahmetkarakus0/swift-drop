@@ -27,6 +27,7 @@ def create_access_token(user_id: uuid.UUID, role: UserRole) -> tuple[str, int]:
     now = datetime.now(timezone.utc)
     payload = {
         "sub": str(user_id),
+        "jti": uuid.uuid4().hex,
         "role": role.value,
         "iat": now,
         "exp": now + timedelta(seconds=expires_in),

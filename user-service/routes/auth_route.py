@@ -1,8 +1,8 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 
-from core.dependencies import get_auth_service, get_current_user
+from core.dependencies import get_auth_service, get_bearer_token, get_current_user
 from models import User
 from schemas.auth_schema import (
     CourierRegisterRequest,
@@ -48,6 +48,15 @@ def login(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ):
     return auth_service.login(data)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    token: Annotated[str, Depends(get_bearer_token)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+):
+    auth_service.logout(token)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/me", response_model=UserResponse)
