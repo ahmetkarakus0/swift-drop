@@ -1,5 +1,7 @@
 # freeze packages to requirements.txt
-pip freeze > requirements.txt
+pip freeze > requirements.txt 
+or
+pip freeze | Set-Content -Encoding ascii requirements.txt
 
 # run the app
 uvicorn main:app --port {port} --reload
