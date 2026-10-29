@@ -13,6 +13,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    APP_BASE_URL: str = "http://127.0.0.1:8000"
+
     POSTGRESQL_URL: str
     REDIS_URL: str
 

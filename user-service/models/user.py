@@ -30,6 +30,8 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    # Token embedded in the verification link; NULL once the user is verified.
+    user_verification_link: Mapped[Optional[str]] = mapped_column(String(64), unique=True)
 
     customer: Mapped[Optional["Customer"]] = relationship(back_populates="user", uselist=False)
     courier: Mapped[Optional["Courier"]] = relationship(back_populates="user", uselist=False)

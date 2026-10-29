@@ -7,6 +7,7 @@
 - role: enum('customer', 'courier', 'merchant', 'admin')
 - is_active: boolean
 - is_verified: boolean
+- user_verification_link: string, unique, nullable (set to null after verification)
 - created_at: timestamp
 - updated_at: timestamp
 
@@ -46,6 +47,7 @@
 
 - status: enum('pending', 'approved', 'rejected')
 - commission_rate: decimal
+- is_verified: boolean (only admins can update)
 
 - created_at: timestamp
 - updated_at: timestamp

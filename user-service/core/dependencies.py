@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
@@ -7,11 +8,13 @@ from sqlalchemy.orm import Session
 
 from core.database import engine, get_db
 from core.redis import get_redis, redis_client
-from models import User
+from models import User, UserRole
+from repositories.merchant_repo import MerchantRepository
 from repositories.token_repo import TokenRepository
 from repositories.user_repo import UserRepository
 from services.auth_service import AuthService
 from services.health_service import HealthService
+from services.merchant_service import MerchantService
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -48,6 +51,21 @@ def get_current_user(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> User:
     return auth_service.get_user_from_token(token)
+
+
+def require_roles(*roles: UserRole) -> Callable[..., User]:
+    """Usage: Depends(require_roles(UserRole.ADMIN))"""
+
+    def checker(current_user: Annotated[User, Depends(get_current_user)]) -> User:
+        if current_user.role not in roles:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "You do not have permission to do this")
+        return current_user
+
+    return checker
+
+
+def get_merchant_service(db: Annotated[Session, Depends(get_db)]) -> MerchantService:
+    return MerchantService(MerchantRepository(db))
 
 
 def get_health_service() -> HealthService:

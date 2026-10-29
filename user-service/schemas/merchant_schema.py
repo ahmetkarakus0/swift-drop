@@ -20,6 +20,7 @@ class MerchantResponse(BaseModel):
     iban: str
     status: MerchantStatus
     commission_rate: Optional[Decimal]
+    is_verified: bool
     created_at: datetime
     updated_at: datetime
     addresses: list[AddressResponse]

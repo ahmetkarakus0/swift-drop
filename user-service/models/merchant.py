@@ -3,7 +3,7 @@ import uuid
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import CheckConstraint, Enum, ForeignKey, Numeric, String
+from sqlalchemy import Boolean, CheckConstraint, Enum, ForeignKey, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -44,6 +44,8 @@ class Merchant(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     # Percentage (e.g. 12.50). Set by an admin; NULL until then.
     commission_rate: Mapped[Optional[Decimal]] = mapped_column(Numeric(5, 2))
+    # Admin-only.
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="merchant")
     addresses: Mapped[list["Address"]] = relationship(

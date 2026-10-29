@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 
 from core.dependencies import get_auth_service, get_bearer_token, get_current_user
 from models import User
@@ -64,6 +64,14 @@ def login(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ):
     return auth_service.login(data)
+
+
+@router.get("/verify", response_model=UserResponse)
+def verify_user(
+    token: Annotated[str, Query(min_length=1, max_length=64)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+):
+    return auth_service.verify_user(token)
 
 
 @router.post("/refresh", response_model=TokenResponse)

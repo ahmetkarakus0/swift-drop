@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, APIRouter
@@ -6,6 +7,9 @@ from core.database import engine
 from core.redis import redis_client
 from routes.auth_route import router as auth_router
 from routes.health_route import router as health_router
+from routes.merchant_route import router as merchant_router
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
 
 
 @asynccontextmanager
@@ -23,6 +27,7 @@ app = FastAPI(
 
 router = APIRouter(prefix="/api")
 router.include_router(auth_router)
+router.include_router(merchant_router)
 
 app.include_router(router)
 app.include_router(health_router)

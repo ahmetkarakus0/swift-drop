@@ -17,8 +17,15 @@ class UserRepository:
     def get_by_email(self, email: str) -> Optional[User]:
         return self.db.scalar(select(User).where(User.email == email))
 
+    def get_by_verification_link(self, token: str) -> Optional[User]:
+        return self.db.scalar(select(User).where(User.user_verification_link == token))
+
     def create(self, user: User) -> User:
         """Saves the user together with its related profile and addresses in one transaction."""
         self.db.add(user)
+        self.db.commit()
+        return user
+
+    def save(self, user: User) -> User:
         self.db.commit()
         return user

@@ -1,13 +1,16 @@
 import logging
 import math
+import secrets
 import time
 import uuid
+from urllib.parse import urlencode
 
 import jwt
 from fastapi import HTTPException, status
 from redis.exceptions import RedisError
 from sqlalchemy.exc import IntegrityError
 
+from core.config.settings import settings
 from core.security import (
     TokenType,
     create_access_token,
@@ -79,6 +82,14 @@ class AuthService:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "User is inactive")
 
         return self._issue_tokens(user)
+
+    def verify_user(self, token: str) -> User:
+        user = self.user_repo.get_by_verification_link(token)
+        if user is None:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid or already used verification link")
+        user.is_verified = True
+        user.user_verification_link = None
+        return self.user_repo.save(user)
 
     def refresh(self, refresh_token: str) -> TokenResponse:
         payload = self._decode_valid_token(refresh_token, TokenType.REFRESH)
@@ -172,7 +183,12 @@ class AuthService:
     def _build_user(self, data: BaseRegisterRequest, role: UserRole) -> User:
         if self.user_repo.get_by_email(data.email):
             raise HTTPException(status.HTTP_409_CONFLICT, "Email is already registered")
-        return User(email=data.email, password=hash_password(data.password), role=role)
+        return User(
+            email=data.email,
+            password=hash_password(data.password),
+            role=role,
+            user_verification_link=secrets.token_urlsafe(32),
+        )
 
     @staticmethod
     def _build_default_address(data: AddressCreate) -> Address:
@@ -180,7 +196,15 @@ class AuthService:
 
     def _save_new_user(self, user: User) -> User:
         try:
-            return self.user_repo.create(user)
+            saved = self.user_repo.create(user)
         except IntegrityError:
             self.user_repo.db.rollback()
             raise HTTPException(status.HTTP_409_CONFLICT, "Email is already registered")
+        self._send_verification_link(saved)
+        return saved
+
+    @staticmethod
+    def _send_verification_link(user: User) -> None:
+        link = f"{settings.APP_BASE_URL}/api/auth/verify?{urlencode({'token': user.user_verification_link})}"
+        # TODO: send by email. Logging the link is only acceptable for local development.
+        logger.info("Verification link for %s: %s", user.email, link)
