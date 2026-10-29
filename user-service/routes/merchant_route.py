@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 
 from core.dependencies import get_merchant_service, require_roles
 from models import UserRole
-from schemas.merchant_schema import MerchantResponse
+from schemas.merchant_schema import MerchantResponse, MerchantStatusUpdate
 from services.merchant_service import MerchantService
 
 router = APIRouter(prefix="/merchants", tags=["merchants"])
@@ -21,3 +21,16 @@ def verify_merchant(
     merchant_service: Annotated[MerchantService, Depends(get_merchant_service)],
 ):
     return merchant_service.verify(merchant_id)
+
+
+@router.patch(
+    "/{merchant_id}/status",
+    response_model=MerchantResponse,
+    dependencies=[Depends(require_roles(UserRole.ADMIN))],
+)
+def update_merchant_status(
+    merchant_id: uuid.UUID,
+    data: MerchantStatusUpdate,
+    merchant_service: Annotated[MerchantService, Depends(get_merchant_service)],
+):
+    return merchant_service.set_status(merchant_id, data.status)
