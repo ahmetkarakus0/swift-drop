@@ -59,5 +59,6 @@ API docs are available at http://127.0.0.1:8000/docs.
 | POST | `/api/auth/login` | Returns an access token (30 min) and a refresh token (7 days) |
 | POST | `/api/auth/refresh` | Exchanges a refresh token for a new token pair; the old refresh token stops working |
 | POST | `/api/auth/logout` | Revokes the access token (header) and the refresh token (body) |
-| GET | `/api/auth/me` | Returns the current user (requires `Authorization: Bearer <access_token>`) |
+| GET | `/api/auth/me` | Returns the current user with their `customer_id`, `courier_id` or `merchant_id` (requires `Authorization: Bearer <access_token>`). Returns `403` if the user is inactive, unverified, an unapproved courier or an unverified merchant |
 | POST | `/api/merchants/{merchant_id}/verify` | Marks a merchant as verified (admin only) |
+| PATCH | `/api/merchants/{merchant_id}/status` | Approves or rejects a merchant with `{"status": "approved"}` or `{"status": "rejected"}` (admin only) |
