@@ -170,7 +170,7 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 | U7 | Yanlış şifre ve olmayan kullanıcıyla giriş 401 döner; pasif kullanıcı 403 alır | `tests/user_service/test_login_failures.py` | Planlandı |
 | U8 | Refresh token yeni token çifti verir; eski refresh token tekrar kullanılamaz | `tests/user_service/test_token_refresh_rotation.py` | Planlandı |
 | U9 | Logout sonrası access ve refresh token'lar geçersiz olur (Redis'te iptal kaydı oluşur) | `tests/user_service/test_logout_revokes_tokens.py` | Planlandı |
-| U10 | Admin olmayan kullanıcı merchant doğrulama/durum ve kurye doğrulama endpoint'lerine 403 alır | `tests/user_service/test_admin_only_endpoints.py` | Planlandı |
+| U10 | `/couriers/{id}/verify`, `/merchants/{id}/verify` ve `/merchants/{id}/status` sadece admin'e açıktır: customer/courier/merchant 403, token'sız istek 401 alır ve DB'de kayıt değişmez; admin üçünü de yapabilir | `tests/user_service/test_admin_only_endpoints.py` | Yazıldı |
 | U11 | Geçersiz payload'lar (kurye plaka kuralları, IBAN, telefon) 422 döner | `tests/user_service/test_registration_validation.py` | Planlandı |
 | U12 | Token yalnızca hesap uygunken geçerlidir (bkz. [Hesap Uygunluk Kuralları](#hesap-uygunluk-kuralları)); aynı token koşullar değiştikçe `/me`'de 403 ↔ 200 arasında geçiş yapar, pasif kullanıcı giriş de yapamaz | `tests/user_service/test_account_eligibility.py` | Yazıldı |
 
