@@ -31,7 +31,7 @@
 - phone_number: string
 - vehicle_type: enum('bicycle', 'motorcycle', 'car')
 - vehicle_plate: string
-- is_approved: boolean
+- is_verified: boolean (only admins can update)
 - created_at: timestamp
 
 ## merchants

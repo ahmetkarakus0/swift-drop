@@ -6,6 +6,7 @@ from fastapi import FastAPI, APIRouter
 from core.database import engine
 from core.redis import redis_client
 from routes.auth_route import router as auth_router
+from routes.courier_route import router as courier_router
 from routes.health_route import router as health_router
 from routes.merchant_route import router as merchant_router
 
@@ -27,6 +28,7 @@ app = FastAPI(
 
 router = APIRouter(prefix="/api")
 router.include_router(auth_router)
+router.include_router(courier_router)
 router.include_router(merchant_router)
 
 app.include_router(router)

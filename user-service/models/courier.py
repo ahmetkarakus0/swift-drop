@@ -33,7 +33,8 @@ class Courier(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     )
     # Bicycles have no plate.
     vehicle_plate: Mapped[Optional[str]] = mapped_column(String(20))
-    is_approved: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
+    # Admin-only.
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="courier")
     addresses: Mapped[list["Address"]] = relationship(

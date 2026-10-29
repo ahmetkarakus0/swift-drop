@@ -9,10 +9,12 @@ from sqlalchemy.orm import Session
 from core.database import engine, get_db
 from core.redis import get_redis, redis_client
 from models import User, UserRole
+from repositories.courier_repo import CourierRepository
 from repositories.merchant_repo import MerchantRepository
 from repositories.token_repo import TokenRepository
 from repositories.user_repo import UserRepository
 from services.auth_service import AuthService
+from services.courier_service import CourierService
 from services.health_service import HealthService
 from services.merchant_service import MerchantService
 
@@ -73,6 +75,10 @@ def require_roles(*roles: UserRole) -> Callable[..., User]:
 
 def get_merchant_service(db: Annotated[Session, Depends(get_db)]) -> MerchantService:
     return MerchantService(MerchantRepository(db))
+
+
+def get_courier_service(db: Annotated[Session, Depends(get_db)]) -> CourierService:
+    return CourierService(CourierRepository(db))
 
 
 def get_health_service() -> HealthService:

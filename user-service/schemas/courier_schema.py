@@ -17,6 +17,6 @@ class CourierResponse(BaseModel):
     phone_number: str
     vehicle_type: VehicleType
     vehicle_plate: Optional[str]
-    is_approved: bool
+    is_verified: bool
     created_at: datetime
     addresses: list[AddressResponse]
