@@ -16,7 +16,7 @@ from schemas.auth_schema import (
     RefreshRequest,
     TokenResponse,
 )
-from schemas.user_schema import UserResponse
+from schemas.user_schema import MeResponse, UserResponse
 from services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -92,6 +92,6 @@ def logout(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=MeResponse)
 def me(current_user: Annotated[User, Depends(get_current_user)]):
     return current_user

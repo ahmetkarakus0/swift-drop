@@ -15,6 +15,9 @@ class Settings(BaseSettings):
 
     POSTGRESQL_URL: str
 
+    USER_SERVICE_URL: str = "http://127.0.0.1:8000"
+    USER_SERVICE_TIMEOUT_SECONDS: float = 5.0
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -116,6 +116,19 @@ class AuthService:
         return self._get_active_user(payload)
 
     @staticmethod
+    def ensure_eligible(user: User) -> User:
+        """Rejects users who may not act on the platform yet."""
+        if not user.is_active:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "User is inactive")
+        if not user.is_verified:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "User is not verified")
+        if user.role == UserRole.COURIER and (user.courier is None or not user.courier.is_approved):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Courier is not approved")
+        if user.role == UserRole.MERCHANT and (user.merchant is None or not user.merchant.is_verified):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Merchant is not verified")
+        return user
+
+    @staticmethod
     def _issue_tokens(user: User) -> TokenResponse:
         access_token, expires_in = create_access_token(user.id, user.role)
         refresh_token, refresh_expires_in = create_refresh_token(user.id)

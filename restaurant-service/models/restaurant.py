@@ -30,7 +30,6 @@ class Restaurant(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     postal_code: Mapped[str] = mapped_column(String(20), nullable=False)
     address_line1: Mapped[str] = mapped_column(String(255), nullable=False)
     address_line2: Mapped[Optional[str]] = mapped_column(String(255))
-    is_default: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
 
     categories: Mapped[list["Category"]] = relationship(
         back_populates="restaurant", cascade="all, delete-orphan"

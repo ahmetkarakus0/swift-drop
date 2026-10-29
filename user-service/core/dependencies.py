@@ -46,11 +46,18 @@ def get_bearer_token(
     return credentials.credentials
 
 
-def get_current_user(
+def get_authenticated_user(
     token: Annotated[str, Depends(get_bearer_token)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> User:
+    """Valid token and active user only. Use for onboarding routes that pending users must reach."""
     return auth_service.get_user_from_token(token)
+
+
+def get_current_user(
+    user: Annotated[User, Depends(get_authenticated_user)],
+) -> User:
+    return AuthService.ensure_eligible(user)
 
 
 def require_roles(*roles: UserRole) -> Callable[..., User]:

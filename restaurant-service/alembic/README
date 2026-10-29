@@ -17,7 +17,6 @@
 - postal_code: string
 - address_line1: string
 - address_line2: string
-- is_default: boolean
 - created_at: timestamp
 
 ## categories
