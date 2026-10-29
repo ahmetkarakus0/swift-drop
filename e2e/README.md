@@ -169,7 +169,7 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 | U6 | Doğrulama linki ikinci kez kullanılamaz ve DB'de link temizlenir | `tests/user_service/test_email_verification_link.py` | Planlandı |
 | U7 | Yanlış şifre ve olmayan kullanıcıyla giriş 401 döner; pasif kullanıcı 403 alır | `tests/user_service/test_login_failures.py` | Planlandı |
 | U8 | Refresh token yeni token çifti verir; eski refresh token tekrar kullanılamaz | `tests/user_service/test_token_refresh_rotation.py` | Planlandı |
-| U9 | Logout sonrası access ve refresh token'lar geçersiz olur (Redis'te iptal kaydı oluşur) | `tests/user_service/test_logout_revokes_tokens.py` | Planlandı |
+| U9 | Logout sonrası o oturumun access ve refresh token'ları geçersiz olur (customer/courier/merchant): Redis'te TTL'li iptal kaydı oluşur, `/me`, `/refresh` ve tekrar logout 401 döner; aynı kullanıcının diğer oturumları çalışmaya devam eder ve tekrar giriş yapılabilir | `tests/user_service/test_logout_revokes_tokens.py` | Yazıldı |
 | U10 | `/couriers/{id}/verify`, `/merchants/{id}/verify` ve `/merchants/{id}/status` sadece admin'e açıktır: customer/courier/merchant 403, token'sız istek 401 alır ve DB'de kayıt değişmez; admin üçünü de yapabilir | `tests/user_service/test_admin_only_endpoints.py` | Yazıldı |
 | U11 | Geçersiz payload'lar (kurye plaka kuralları, IBAN, telefon) 422 döner | `tests/user_service/test_registration_validation.py` | Planlandı |
 | U12 | Token yalnızca hesap uygunken geçerlidir (bkz. [Hesap Uygunluk Kuralları](#hesap-uygunluk-kuralları)); aynı token koşullar değiştikçe `/me`'de 403 ↔ 200 arasında geçiş yapar, pasif kullanıcı giriş de yapamaz | `tests/user_service/test_account_eligibility.py` | Yazıldı |
@@ -191,4 +191,4 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 | X1 | Token'sız veya geçersiz token'la restaurant-service istekleri 401 döner | `tests/cross_service/test_restaurant_auth_required.py` | Planlandı |
 | X2 | Müşteri ve kurye token'larıyla restaurant-service 403 döner | `tests/cross_service/test_restaurant_non_merchant_forbidden.py` | Planlandı |
 | X3 | Doğrulanmamış veya admin onayı almamış merchant restaurant-service'te 403 alır | `tests/cross_service/test_unverified_merchant_forbidden.py` | Planlandı |
-| X4 | Merchant logout olduktan sonra eski token'la restaurant-service'e erişemez | `tests/cross_service/test_logout_blocks_restaurant_access.py` | Planlandı |
+| X4 | Merchant logout olduktan sonra eski token'la restaurant-service'te okuma/yazma istekleri 401 döner ve DB'de kayıt değişmez; tekrar giriş yapınca erişim geri gelir | `tests/cross_service/test_logout_blocks_restaurant_access.py` | Yazıldı |
