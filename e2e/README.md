@@ -182,7 +182,7 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 | R2 | Merchant restoran, kategori ve ürünü günceller; sadece gönderilen alanlar değişir | `tests/restaurant_service/test_menu_partial_updates.py` | Planlandı |
 | R3 | Restoran silinince restoran, kategorileri ve ürünleri pasif olur; DB'den kayıt silinmez | `tests/restaurant_service/test_restaurant_deactivation.py` | Planlandı |
 | R4 | Kategori silinince ürünleriyle birlikte DB'den silinir | `tests/restaurant_service/test_category_deletion.py` | Planlandı |
-| R5 | Merchant başka bir merchant'ın restoran/kategori/ürününe erişemez (404) | `tests/restaurant_service/test_merchant_isolation.py` | Planlandı |
+| R5 | Merchant sadece kendi verisini görür: `/restaurants`, `/categories`, `/items` listeleri yalnızca kendi kayıtlarını döner; başka merchant'ın restoran/kategori/ürününü okuma, oluşturma, güncelleme ve silme istekleri 404 döner ve DB'de kayıt değişmez | `tests/restaurant_service/test_merchant_isolation.py` | Yazıldı |
 
 ### Servisler Arası
 
