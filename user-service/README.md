@@ -54,5 +54,7 @@ API docs are available at http://127.0.0.1:8000/docs.
 |---|---|---|
 | POST | `/api/auth/register/customer` | Register a customer with profile and address |
 | POST | `/api/auth/register/courier` | Register a courier with profile, vehicle and address |
-| POST | `/api/auth/login` | Returns a JWT access token |
-| GET | `/api/auth/me` | Returns the current user (requires `Authorization: Bearer <token>`) |
+| POST | `/api/auth/login` | Returns an access token (30 min) and a refresh token (7 days) |
+| POST | `/api/auth/refresh` | Exchanges a refresh token for a new token pair; the old refresh token stops working |
+| POST | `/api/auth/logout` | Revokes the access token (header) and the refresh token (body) |
+| GET | `/api/auth/me` | Returns the current user (requires `Authorization: Bearer <access_token>`) |

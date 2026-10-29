@@ -10,6 +10,8 @@ from schemas.auth_schema import (
     CustomerRegisterRequest,
     CustomerRegisterResponse,
     LoginRequest,
+    LogoutRequest,
+    RefreshRequest,
     TokenResponse,
 )
 from schemas.user_schema import UserResponse
@@ -50,12 +52,21 @@ def login(
     return auth_service.login(data)
 
 
+@router.post("/refresh", response_model=TokenResponse)
+def refresh(
+    data: RefreshRequest,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+):
+    return auth_service.refresh(data.refresh_token)
+
+
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
+    data: LogoutRequest,
     token: Annotated[str, Depends(get_bearer_token)],
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ):
-    auth_service.logout(token)
+    auth_service.logout(token, data.refresh_token)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
