@@ -1,0 +1,52 @@
+# Tables
+
+## users
+- id: uuid, primary
+- email: string, unique
+- password: string
+- role: enum('customer', 'courier', 'admin')
+- is_active: boolean
+- is_verified: boolean
+- created_at: timestamp
+- updated_at: timestamp
+
+## customers
+- id: uuid, primary
+
+- user_id: uuid, foreign key to users.id
+
+- first_name: string
+- last_name: string
+- phone_number: string
+- created_at: timestamp
+
+## couriers
+- id: uuid, primary
+
+- user_id: uuid, foreign key to users.id
+
+- first_name: string
+- last_name: string
+- phone_number: string
+- vehicle_type: enum('bicycle', 'motorcycle', 'car')
+- vehicle_plate: string
+- is_approved: boolean
+- created_at: timestamp
+
+## addresses
+- id: uuid, primary
+
+- customer_id: uuid, foreign key to customers.id
+- courier_id: uuid, foreign key to couriers.id
+
+- title: string
+- phone_number: string
+- country: string
+- city: string
+- district: string
+- neighborhood: string
+- postal_code: string
+- address_line1: string
+- address_line2: string
+- is_default: boolean
+- created_at: timestamp
