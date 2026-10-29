@@ -5,6 +5,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 from schemas.common import PatchModel, ShortText
+from schemas.item_schema import ItemResponse
 
 
 class CategoryCreate(BaseModel):
@@ -25,3 +26,7 @@ class CategoryResponse(BaseModel):
     name: str
     is_active: bool
     created_at: datetime
+
+
+class CategoryWithItemsResponse(CategoryResponse):
+    items: list[ItemResponse]

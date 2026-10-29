@@ -4,7 +4,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response, status
 
 from core.dependencies import get_current_merchant_id, get_restaurant_service
-from schemas.restaurant_schema import RestaurantCreate, RestaurantResponse, RestaurantUpdate
+from schemas.restaurant_schema import (
+    RestaurantCreate,
+    RestaurantDetailResponse,
+    RestaurantResponse,
+    RestaurantUpdate,
+)
 from services.restaurant_service import RestaurantService
 
 router = APIRouter(prefix="/restaurants", tags=["restaurants"])
@@ -27,13 +32,13 @@ def list_restaurants(
     return restaurant_service.get_all(merchant_id)
 
 
-@router.get("/{restaurant_id}", response_model=RestaurantResponse)
+@router.get("/{restaurant_id}", response_model=RestaurantDetailResponse)
 def get_restaurant(
     restaurant_id: uuid.UUID,
     merchant_id: Annotated[uuid.UUID, Depends(get_current_merchant_id)],
     restaurant_service: Annotated[RestaurantService, Depends(get_restaurant_service)],
 ):
-    return restaurant_service.get(merchant_id, restaurant_id)
+    return restaurant_service.get_with_menu(merchant_id, restaurant_id)
 
 
 @router.patch("/{restaurant_id}", response_model=RestaurantResponse)

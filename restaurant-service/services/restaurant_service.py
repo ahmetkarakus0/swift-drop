@@ -23,6 +23,12 @@ class RestaurantService:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Restaurant not found")
         return restaurant
 
+    def get_with_menu(self, merchant_id: uuid.UUID, restaurant_id: uuid.UUID) -> Restaurant:
+        restaurant = self.restaurant_repo.get_owned_with_menu(restaurant_id, merchant_id)
+        if restaurant is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Restaurant not found")
+        return restaurant
+
     def update(
         self, merchant_id: uuid.UUID, restaurant_id: uuid.UUID, data: RestaurantUpdate
     ) -> Restaurant:

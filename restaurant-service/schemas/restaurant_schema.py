@@ -4,6 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
+from schemas.category_schema import CategoryWithItemsResponse
 from schemas.common import LongText, PatchModel, PhoneNumber, PostalCode, ShortText
 
 
@@ -53,3 +54,7 @@ class RestaurantResponse(BaseModel):
     address_line1: str
     address_line2: Optional[str]
     created_at: datetime
+
+
+class RestaurantDetailResponse(RestaurantResponse):
+    categories: list[CategoryWithItemsResponse]

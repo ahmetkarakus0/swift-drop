@@ -29,6 +29,12 @@ class CategoryService:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Category not found")
         return category
 
+    def get_with_items(self, merchant_id: uuid.UUID, category_id: int) -> Category:
+        category = self.category_repo.get_owned_with_items(category_id, merchant_id)
+        if category is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Category not found")
+        return category
+
     def update(self, merchant_id: uuid.UUID, category_id: int, data: CategoryUpdate) -> Category:
         category = self.get(merchant_id, category_id)
         for field, value in data.changes().items():

@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 
 from sqlalchemy import select, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from models import Category, Item, Restaurant
 
@@ -20,6 +20,19 @@ class RestaurantRepository:
                 Restaurant.merchant_id == merchant_id,
                 Restaurant.is_active.is_(True),
             )
+        )
+
+    def get_owned_with_menu(
+        self, restaurant_id: uuid.UUID, merchant_id: uuid.UUID
+    ) -> Optional[Restaurant]:
+        return self.db.scalar(
+            select(Restaurant)
+            .where(
+                Restaurant.id == restaurant_id,
+                Restaurant.merchant_id == merchant_id,
+                Restaurant.is_active.is_(True),
+            )
+            .options(selectinload(Restaurant.categories).selectinload(Category.items))
         )
 
     def list_by_merchant(self, merchant_id: uuid.UUID) -> list[Restaurant]:

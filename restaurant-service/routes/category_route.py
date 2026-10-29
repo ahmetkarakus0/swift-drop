@@ -4,7 +4,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response, status
 
 from core.dependencies import get_category_service, get_current_merchant_id
-from schemas.category_schema import CategoryCreate, CategoryResponse, CategoryUpdate
+from schemas.category_schema import (
+    CategoryCreate,
+    CategoryResponse,
+    CategoryUpdate,
+    CategoryWithItemsResponse,
+)
 from services.category_service import CategoryService
 
 router = APIRouter(tags=["categories"])
@@ -33,13 +38,13 @@ def list_categories(
     return category_service.get_all(merchant_id, restaurant_id)
 
 
-@router.get("/categories/{category_id}", response_model=CategoryResponse)
+@router.get("/categories/{category_id}", response_model=CategoryWithItemsResponse)
 def get_category(
     category_id: int,
     merchant_id: Annotated[uuid.UUID, Depends(get_current_merchant_id)],
     category_service: Annotated[CategoryService, Depends(get_category_service)],
 ):
-    return category_service.get(merchant_id, category_id)
+    return category_service.get_with_items(merchant_id, category_id)
 
 
 @router.patch("/categories/{category_id}", response_model=CategoryResponse)

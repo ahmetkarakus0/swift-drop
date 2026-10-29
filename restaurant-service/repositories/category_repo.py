@@ -1,8 +1,8 @@
 import uuid
 from typing import Optional
 
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import Select, select
+from sqlalchemy.orm import Session, selectinload
 
 from models import Category, Restaurant
 
@@ -12,7 +12,16 @@ class CategoryRepository:
         self.db = db
 
     def get_owned(self, category_id: int, merchant_id: uuid.UUID) -> Optional[Category]:
+        return self.db.scalar(self._owned_query(category_id, merchant_id))
+
+    def get_owned_with_items(self, category_id: int, merchant_id: uuid.UUID) -> Optional[Category]:
         return self.db.scalar(
+            self._owned_query(category_id, merchant_id).options(selectinload(Category.items))
+        )
+
+    @staticmethod
+    def _owned_query(category_id: int, merchant_id: uuid.UUID) -> Select[tuple[Category]]:
+        return (
             select(Category)
             .join(Category.restaurant)
             .where(

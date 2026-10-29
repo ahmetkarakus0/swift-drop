@@ -22,5 +22,5 @@ class Category(IntegerPrimaryKeyMixin, CreatedAtMixin, Base):
 
     restaurant: Mapped["Restaurant"] = relationship(back_populates="categories")
     items: Mapped[list["Item"]] = relationship(
-        back_populates="category", cascade="all, delete-orphan"
+        back_populates="category", cascade="all, delete-orphan", order_by="Item.id"
     )
