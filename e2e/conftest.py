@@ -87,6 +87,6 @@ def _clean_test_data(settings: Settings, user_db: Database, restaurant_db: Datab
     if settings.KEEP_TEST_DATA:
         yield
         return
-    cleanup_test_data(user_db, restaurant_db, settings.TEST_EMAIL_DOMAIN)
+    cleanup_test_data(user_db, restaurant_db, settings.TEST_DATA_PREFIX)
     yield
-    cleanup_test_data(user_db, restaurant_db, settings.TEST_EMAIL_DOMAIN)
+    cleanup_test_data(user_db, restaurant_db, settings.TEST_DATA_PREFIX)

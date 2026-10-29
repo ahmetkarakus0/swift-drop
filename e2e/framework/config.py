@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     RESTAURANT_DB_URL: str
     REDIS_URL: str
 
+    TEST_DATA_PREFIX: str = "e2e_test"
     TEST_EMAIL_DOMAIN: str = "e2e.swiftdrop.test"
     DEFAULT_PASSWORD: str = "Password123!"
 

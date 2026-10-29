@@ -10,8 +10,14 @@ def unique_suffix() -> str:
     return uuid.uuid4().hex[:12]
 
 
-def unique_email(prefix: str = "user") -> str:
-    return f"{prefix}.{unique_suffix()}@{get_settings().TEST_EMAIL_DOMAIN}"
+def unique_name(label: str) -> str:
+    """Cleanup only finds rows whose name starts with the test prefix, so build names with this."""
+    return f"{get_settings().TEST_DATA_PREFIX} {label} {unique_suffix()}"
+
+
+def unique_email(label: str = "user") -> str:
+    settings = get_settings()
+    return f"{settings.TEST_DATA_PREFIX}.{label}.{unique_suffix()}@{settings.TEST_EMAIL_DOMAIN}"
 
 
 def address_payload(**overrides: Any) -> dict[str, Any]:
@@ -59,7 +65,7 @@ def merchant_payload(**overrides: Any) -> dict[str, Any]:
     return {
         "email": unique_email("merchant"),
         "password": get_settings().DEFAULT_PASSWORD,
-        "business_name": f"E2E Business {unique_suffix()}",
+        "business_name": unique_name("Business"),
         "phone_number": "+905550000003",
         "tax_number": "1234567890",
         "tax_office": "Kadikoy",
@@ -71,7 +77,7 @@ def merchant_payload(**overrides: Any) -> dict[str, Any]:
 
 def restaurant_payload(**overrides: Any) -> dict[str, Any]:
     return {
-        "name": f"E2E Restaurant {unique_suffix()}",
+        "name": unique_name("Restaurant"),
         "phone_number": "+905550000004",
         "country": "Turkey",
         "city": "Istanbul",
@@ -86,12 +92,12 @@ def restaurant_payload(**overrides: Any) -> dict[str, Any]:
 
 
 def category_payload(**overrides: Any) -> dict[str, Any]:
-    return {"name": f"E2E Category {unique_suffix()}", "is_active": True, **overrides}
+    return {"name": unique_name("Category"), "is_active": True, **overrides}
 
 
 def item_payload(**overrides: Any) -> dict[str, Any]:
     return {
-        "name": f"E2E Item {unique_suffix()}",
+        "name": unique_name("Item"),
         "description": "Created by the e2e suite",
         "price": "99.90",
         "is_active": True,

@@ -34,7 +34,8 @@ copy .env.example .env          # Linux/macOS: cp .env.example .env
 | `USER_SERVICE_URL`, `RESTAURANT_SERVICE_URL` | Servislerin adresleri |
 | `USER_DB_URL`, `RESTAURANT_DB_URL` | Servis veritabanlarına doğrudan bağlantı |
 | `REDIS_URL` | user-service'in kullandığı Redis (token iptali kontrolleri için) |
-| `TEST_EMAIL_DOMAIN` | Testlerin oluşturduğu tüm kullanıcıların e-posta domain'i; temizlik buna göre yapılır |
+| `TEST_DATA_PREFIX` | Testlerin oluşturduğu tüm kayıtların başına eklenen prefix (varsayılan `e2e_test`); temizlik buna göre yapılır |
+| `TEST_EMAIL_DOMAIN` | Test kullanıcılarının e-posta domain'i |
 | `DEFAULT_PASSWORD` | Test kullanıcılarının şifresi |
 | `KEEP_TEST_DATA` | `true` ise test verisi koşu sonunda silinmez (debug için) |
 
@@ -94,7 +95,7 @@ Dönen `Actor` nesnesinde `user_id`, `email`, `password`, `role`, `profile_id` (
 
 - Her case kendi dosyasında: `tests/<alan>/test_<case_adi>.py`. Dosya bir senaryoyu anlatır, içindeki adımlar sırayla yazılır.
 - Case dosyası eklendiğinde aşağıdaki case listesindeki satır güncellenir (dosya adı ve durum).
-- Kullanıcı e-postaları her zaman `framework.data.unique_email()` ile üretilir; temizlik bu domain'e göre yapılır ve testler birbirini etkilemez.
+- Kullanıcı e-postaları her zaman `framework.data.unique_email()`, restoran/kategori/ürün isimleri `framework.data.unique_name()` ile üretilir. İkisi de `TEST_DATA_PREFIX` ile başlar; temizlik bu prefix'e göre yapılır ve testler birbirini etkilemez. Payload override'larında e-posta veya isim verilecekse yine bu fonksiyonlar kullanılmalı, yoksa kayıt temizlenmez.
 - Yanıt kontrolünde `expect_status(response, 201)` kullanılırsa hata mesajında yanıt gövdesi de görünür.
 - API'nin döndüğü değerler, gerektiğinde `user_db` / `restaurant_db` üzerinden DB'deki kayıtla da doğrulanır.
 
@@ -121,7 +122,36 @@ def test_merchant_builds_menu(actors, restaurant_api, restaurant_db):
 
 ## Test Verisi ve Temizlik
 
-Oturum başında (önceki koşulardan kalanlar için) ve sonunda `TEST_EMAIL_DOMAIN` ile biten tüm kullanıcılar silinir. Profil ve adresler `users` tablosundan cascade ile, bu kullanıcılara ait merchant'ların restoranları (kategori ve ürünleriyle birlikte) `restaurant_db`'den silinir. Debug için `KEEP_TEST_DATA=true` ayarlanabilir.
+Testlerin oluşturduğu her kayıt `TEST_DATA_PREFIX` (varsayılan `e2e_test`) ile başlar:
+
+| Veritabanı | Prefix'li alan | Örnek |
+|---|---|---|
+| `user_db` | `users.email` | `e2e_test.customer.3f9a1c2b7d4e@e2e.swiftdrop.test` |
+| `restaurant_db` | `restaurants.name`, `categories.name`, `items.name` | `e2e_test Restaurant 3f9a1c2b7d4e` |
+
+Oturum başında (önceki koşulardan kalanlar için) ve sonunda her veritabanına ayrı ayrı bağlanılır ve prefix ile başlayan tüm kayıtlar silinir (`framework/cleanup.py`):
+
+- `user_db`: prefix'li e-postaya sahip kullanıcılar silinir; profil (customer/courier/merchant) ve adresler cascade ile gider.
+- `restaurant_db`: prefix'li isme sahip restoranlar (kategori ve ürünleriyle birlikte cascade), ardından başka bir üst kayda bağlı kalmış prefix'li kategori ve ürünler silinir.
+
+Eşleşme `starts_with()` ile yapılır (`LIKE` kullanılmaz, çünkü `_` orada joker karakterdir). Debug için `KEEP_TEST_DATA=true` ayarlanabilir.
+
+## Hesap Uygunluk Kuralları
+
+Bir kullanıcının istek atabilmesi (token'ının kabul edilmesi) için hesabının rolüne göre şu koşulları sağlaması gerekir:
+
+| Rol | Koşullar |
+|---|---|
+| customer | `users.is_active = true` ve `users.is_verified = true` |
+| courier | customer koşulları + `couriers.is_verified = true` (admin onayı) |
+| merchant | customer koşulları + `merchants.is_verified = true` (admin onayı) |
+
+- Giriş (`/api/auth/login`) sadece `is_active` kontrol eder; uygun olmayan hesaplar da token alır, ama koşullar her istekte kontrol edildiği için bu token'la yapılan istekler 403 döner. Koşul sağlandığı anda aynı token yeniden kabul edilir.
+- Kontrol `/api/auth/me` üzerinden yapılır; restaurant-service de token'ı bu endpoint'e sorduğu için aynı kurallar orada da geçerlidir.
+- Merchant'ın `status` alanı (`pending`/`approved`/`rejected`) uygunluğu etkilemez; sadece `is_verified` bakılır.
+- 403 yanıtlarının `detail` değerleri: `User is inactive`, `User is not verified`, `Courier is not verified`, `Merchant is not verified`.
+
+Bu kurallar U12 case'inde test edilir.
 
 ## Case Listesi
 
@@ -142,6 +172,7 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 | U9 | Logout sonrası access ve refresh token'lar geçersiz olur (Redis'te iptal kaydı oluşur) | `tests/user_service/test_logout_revokes_tokens.py` | Planlandı |
 | U10 | Admin olmayan kullanıcı merchant doğrulama/durum ve kurye doğrulama endpoint'lerine 403 alır | `tests/user_service/test_admin_only_endpoints.py` | Planlandı |
 | U11 | Geçersiz payload'lar (kurye plaka kuralları, IBAN, telefon) 422 döner | `tests/user_service/test_registration_validation.py` | Planlandı |
+| U12 | Token yalnızca hesap uygunken geçerlidir (bkz. [Hesap Uygunluk Kuralları](#hesap-uygunluk-kuralları)); aynı token koşullar değiştikçe `/me`'de 403 ↔ 200 arasında geçiş yapar, pasif kullanıcı giriş de yapamaz | `tests/user_service/test_account_eligibility.py` | Yazıldı |
 
 ### Restaurant Service
 
