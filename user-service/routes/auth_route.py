@@ -11,6 +11,8 @@ from schemas.auth_schema import (
     CustomerRegisterResponse,
     LoginRequest,
     LogoutRequest,
+    MerchantRegisterRequest,
+    MerchantRegisterResponse,
     RefreshRequest,
     TokenResponse,
 )
@@ -42,6 +44,18 @@ def register_courier(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ):
     return auth_service.register_courier(data)
+
+
+@router.post(
+    "/register/merchant",
+    response_model=MerchantRegisterResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def register_merchant(
+    data: MerchantRegisterRequest,
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+):
+    return auth_service.register_merchant(data)
 
 
 @router.post("/login", response_model=TokenResponse)

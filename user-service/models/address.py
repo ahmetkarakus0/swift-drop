@@ -9,13 +9,14 @@ from models.base import Base, CreatedAtMixin, UUIDPrimaryKeyMixin
 if TYPE_CHECKING:
     from models.courier import Courier
     from models.customer import Customer
+    from models.merchant import Merchant
 
 
 class Address(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     __tablename__ = "addresses"
     __table_args__ = (
         CheckConstraint(
-            "num_nonnulls(customer_id, courier_id) = 1",
+            "num_nonnulls(customer_id, courier_id, merchant_id) = 1",
             name="ck_addresses_single_owner",
         ),
     )
@@ -25,6 +26,9 @@ class Address(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     )
     courier_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey("couriers.id", ondelete="CASCADE"), index=True
+    )
+    merchant_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("merchants.id", ondelete="CASCADE"), index=True
     )
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -39,3 +43,4 @@ class Address(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
 
     customer: Mapped[Optional["Customer"]] = relationship(back_populates="addresses")
     courier: Mapped[Optional["Courier"]] = relationship(back_populates="addresses")
+    merchant: Mapped[Optional["Merchant"]] = relationship(back_populates="addresses")

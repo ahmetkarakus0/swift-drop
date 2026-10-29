@@ -9,11 +9,13 @@ from models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 if TYPE_CHECKING:
     from models.courier import Courier
     from models.customer import Customer
+    from models.merchant import Merchant
 
 
 class UserRole(str, enum.Enum):
     CUSTOMER = "customer"
     COURIER = "courier"
+    MERCHANT = "merchant"
     ADMIN = "admin"
 
 
@@ -31,3 +33,4 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     customer: Mapped[Optional["Customer"]] = relationship(back_populates="user", uselist=False)
     courier: Mapped[Optional["Courier"]] = relationship(back_populates="user", uselist=False)
+    merchant: Mapped[Optional["Merchant"]] = relationship(back_populates="user", uselist=False)

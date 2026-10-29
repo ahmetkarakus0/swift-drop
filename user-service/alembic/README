@@ -4,7 +4,7 @@
 - id: uuid, primary
 - email: string, unique
 - password: string
-- role: enum('customer', 'courier', 'admin')
+- role: enum('customer', 'courier', 'merchant', 'admin')
 - is_active: boolean
 - is_verified: boolean
 - created_at: timestamp
@@ -33,11 +33,29 @@
 - is_approved: boolean
 - created_at: timestamp
 
+## merchants
+- id: uuid, primary
+
+- user_id: uuid, foreign key to users.id
+
+- business_name: string
+- phone_number: string
+- tax_number: string
+- tax_office: string
+- iban: string
+
+- status: enum('pending', 'approved', 'rejected')
+- commission_rate: decimal
+
+- created_at: timestamp
+- updated_at: timestamp
+
 ## addresses
 - id: uuid, primary
 
 - customer_id: uuid, foreign key to customers.id
 - courier_id: uuid, foreign key to couriers.id
+- merchant_id: uuid, foreign key to merchants.id
 
 - title: string
 - phone_number: string

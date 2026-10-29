@@ -16,7 +16,7 @@ from core.security import (
     hash_password,
     verify_password,
 )
-from models import Address, Courier, Customer, User, UserRole
+from models import Address, Courier, Customer, Merchant, User, UserRole
 from repositories.token_repo import TokenRepository
 from repositories.user_repo import UserRepository
 from schemas.address_schema import AddressCreate
@@ -25,6 +25,7 @@ from schemas.auth_schema import (
     CourierRegisterRequest,
     CustomerRegisterRequest,
     LoginRequest,
+    MerchantRegisterRequest,
     TokenResponse,
 )
 
@@ -54,6 +55,18 @@ class AuthService:
             phone_number=data.phone_number,
             vehicle_type=data.vehicle_type,
             vehicle_plate=data.vehicle_plate,
+            addresses=[self._build_default_address(data.address)],
+        )
+        return self._save_new_user(user)
+
+    def register_merchant(self, data: MerchantRegisterRequest) -> User:
+        user = self._build_user(data, UserRole.MERCHANT)
+        user.merchant = Merchant(
+            business_name=data.business_name,
+            phone_number=data.phone_number,
+            tax_number=data.tax_number,
+            tax_office=data.tax_office,
+            iban=data.iban,
             addresses=[self._build_default_address(data.address)],
         )
         return self._save_new_user(user)

@@ -5,9 +5,10 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_vali
 from core.security import BCRYPT_MAX_BYTES
 from models import VehicleType
 from schemas.address_schema import AddressCreate
-from schemas.common import Email, Name, NormalizedEmail, PhoneNumber
+from schemas.common import Email, Iban, LongText, Name, NormalizedEmail, PhoneNumber, ShortText, TaxNumber
 from schemas.courier_schema import CourierResponse
 from schemas.customer_schema import CustomerResponse
+from schemas.merchant_schema import MerchantResponse
 from schemas.user_schema import UserResponse
 
 VehiclePlate = Annotated[
@@ -30,8 +31,6 @@ _EXAMPLE_ADDRESS = {
 class BaseRegisterRequest(BaseModel):
     email: Email
     password: str = Field(min_length=8)
-    first_name: Name
-    last_name: Name
     phone_number: PhoneNumber
     address: AddressCreate
 
@@ -43,7 +42,12 @@ class BaseRegisterRequest(BaseModel):
         return value
 
 
-class CustomerRegisterRequest(BaseRegisterRequest):
+class PersonRegisterRequest(BaseRegisterRequest):
+    first_name: Name
+    last_name: Name
+
+
+class CustomerRegisterRequest(PersonRegisterRequest):
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
@@ -60,7 +64,7 @@ class CustomerRegisterRequest(BaseRegisterRequest):
     )
 
 
-class CourierRegisterRequest(BaseRegisterRequest):
+class CourierRegisterRequest(PersonRegisterRequest):
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
@@ -91,12 +95,40 @@ class CourierRegisterRequest(BaseRegisterRequest):
         return self
 
 
+class MerchantRegisterRequest(BaseRegisterRequest):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "email": "merchant@example.com",
+                    "password": "Password123!",
+                    "business_name": "Example Business",
+                    "phone_number": "+10000000000",
+                    "tax_number": "0000000000",
+                    "tax_office": "Example Tax Office",
+                    "iban": "GB82 WEST 1234 5698 7654 32",
+                    "address": {**_EXAMPLE_ADDRESS, "title": "Store"},
+                }
+            ]
+        }
+    )
+
+    business_name: LongText
+    tax_number: TaxNumber
+    tax_office: ShortText
+    iban: Iban
+
+
 class CustomerRegisterResponse(UserResponse):
     customer: CustomerResponse
 
 
 class CourierRegisterResponse(UserResponse):
     courier: CourierResponse
+
+
+class MerchantRegisterResponse(UserResponse):
+    merchant: MerchantResponse
 
 
 class LoginRequest(BaseModel):
