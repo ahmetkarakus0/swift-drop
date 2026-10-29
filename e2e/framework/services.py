@@ -41,6 +41,9 @@ class UserServiceApi:
     def me(self, access_token: str) -> httpx.Response:
         return self.client.get("/api/auth/me", token=access_token)
 
+    def verify_courier(self, courier_id: Id, admin_token: str) -> httpx.Response:
+        return self.client.post(f"/api/couriers/{courier_id}/verify", token=admin_token)
+
     def verify_merchant(self, merchant_id: Id, admin_token: str) -> httpx.Response:
         return self.client.post(f"/api/merchants/{merchant_id}/verify", token=admin_token)
 

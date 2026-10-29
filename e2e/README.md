@@ -80,13 +80,13 @@ e2e/
 | `user_api`, `restaurant_api` | Servis endpoint'lerine istek atan wrapper'lar; her metot ham `httpx.Response` döner |
 | `actors` | Senaryonun ihtiyaç duyduğu kullanıcıyı tek satırda hazırlar |
 
-`actors` mümkün olan her adımı gerçek API üzerinden yapar; endpoint'i olmayan adımlar (admin oluşturma, kurye onayı) DB üzerinden yapılır:
+`actors` mümkün olan her adımı gerçek API üzerinden yapar; endpoint'i olmayan tek adım olan admin oluşturma DB üzerinden yapılır:
 
 - `actors.customer(verified=True, login=True, **overrides)`
-- `actors.courier(verified=True, approved=True, login=True, **overrides)`
+- `actors.courier(verified=True, admin_verified=True, login=True, **overrides)`
 - `actors.merchant(verified=True, admin_verified=True, status="approved", login=True, **overrides)`
 - `actors.admin()`
-- `actors.verification_token(actor)`, `actors.verify_email(actor)`, `actors.approve_courier(actor)`, `actors.login(actor)`
+- `actors.verification_token(actor)`, `actors.verify_email(actor)`, `actors.login(actor)`
 
 Dönen `Actor` nesnesinde `user_id`, `email`, `password`, `role`, `profile_id` (customer/courier/merchant id), `access_token`, `refresh_token` ve kayıt yanıtı (`registration`) bulunur.
 
@@ -132,7 +132,7 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 | # | Case | Test dosyası | Durum |
 |---|---|---|---|
 | U1 | Müşteri kayıt olur, doğrulama linkiyle e-postasını doğrular, giriş yapar ve `/me` ile `customer_id` bilgisini görür | `tests/user_service/test_customer_registration_flow.py` | Planlandı |
-| U2 | Kurye kayıt olur; onaylanmadan `/me` 403 döner, onaylandıktan sonra erişebilir | `tests/user_service/test_courier_approval_flow.py` | Planlandı |
+| U2 | Kurye kayıt olur; admin doğrulayana kadar `/me` 403 döner, doğrulandıktan sonra erişebilir | `tests/user_service/test_courier_verification_flow.py` | Planlandı |
 | U3 | Merchant kayıt olur (`pending`); admin doğrulayıp onaylayana kadar `/me` 403 döner, sonra erişebilir | `tests/user_service/test_merchant_onboarding_flow.py` | Planlandı |
 | U4 | Admin merchant'ı reddeder; merchant durumu `rejected` olur | `tests/user_service/test_merchant_rejection_flow.py` | Planlandı |
 | U5 | Aynı e-postayla ikinci kayıt 409 döner, DB'de tek kullanıcı kalır | `tests/user_service/test_duplicate_registration.py` | Planlandı |
@@ -140,7 +140,7 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 | U7 | Yanlış şifre ve olmayan kullanıcıyla giriş 401 döner; pasif kullanıcı 403 alır | `tests/user_service/test_login_failures.py` | Planlandı |
 | U8 | Refresh token yeni token çifti verir; eski refresh token tekrar kullanılamaz | `tests/user_service/test_token_refresh_rotation.py` | Planlandı |
 | U9 | Logout sonrası access ve refresh token'lar geçersiz olur (Redis'te iptal kaydı oluşur) | `tests/user_service/test_logout_revokes_tokens.py` | Planlandı |
-| U10 | Admin olmayan kullanıcı merchant doğrulama/durum endpoint'lerine 403 alır | `tests/user_service/test_merchant_admin_authorization.py` | Planlandı |
+| U10 | Admin olmayan kullanıcı merchant doğrulama/durum ve kurye doğrulama endpoint'lerine 403 alır | `tests/user_service/test_admin_only_endpoints.py` | Planlandı |
 | U11 | Geçersiz payload'lar (kurye plaka kuralları, IBAN, telefon) 422 döner | `tests/user_service/test_registration_validation.py` | Planlandı |
 
 ### Restaurant Service

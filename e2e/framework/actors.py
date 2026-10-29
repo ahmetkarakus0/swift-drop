@@ -2,7 +2,7 @@
 
 Cases usually need a user in a given state (verified customer, approved merchant,
 admin...). These helpers build that state through the real APIs and only fall back
-to the database for steps that have no endpoint (creating an admin, approving a courier).
+to the database for steps that have no endpoint (creating an admin).
 """
 
 import uuid
@@ -43,13 +43,14 @@ class Actors:
         return self._finish(actor, verified=verified, login=login)
 
     def courier(
-        self, *, verified: bool = True, approved: bool = True, login: bool = True, **overrides: Any
+        self, *, verified: bool = True, admin_verified: bool = True, login: bool = True, **overrides: Any
     ) -> Actor:
         payload = data.courier_payload(**overrides)
         body = expect_status(self.user_api.register_courier(payload), 201).json()
         actor = self._actor(payload, body, "courier", body["courier"]["id"])
-        if approved:
-            self.approve_courier(actor)
+        if admin_verified:
+            admin = self.admin()
+            expect_status(self.user_api.verify_courier(actor.profile_id, admin.access_token), 200)
         return self._finish(actor, verified=verified, login=login)
 
     def merchant(
@@ -102,11 +103,6 @@ class Actors:
         token = self.verification_token(actor)
         assert token, f"No verification token found for {actor.email}"
         expect_status(self.user_api.verify_email(token), 200)
-
-    def approve_courier(self, actor: Actor) -> None:
-        self.user_db.execute(
-            "UPDATE couriers SET is_approved = true WHERE id = :id", id=actor.profile_id
-        )
 
     def login(self, actor: Actor) -> Actor:
         tokens = expect_status(self.user_api.login(actor.email, actor.password), 200).json()
