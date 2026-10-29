@@ -5,7 +5,11 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from core.config.settings import settings
 
-engine = create_engine(settings.POSTGRESQL_URL, pool_pre_ping=True)
+engine = create_engine(
+    settings.POSTGRESQL_URL,
+    pool_pre_ping=True,
+    connect_args={"connect_timeout": 5},
+)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 

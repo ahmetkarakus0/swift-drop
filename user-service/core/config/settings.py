@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     )
 
     POSTGRESQL_URL: str
+    REDIS_URL: str
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"

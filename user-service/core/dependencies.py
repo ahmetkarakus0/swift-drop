@@ -4,10 +4,12 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from core.database import get_db
+from core.database import engine, get_db
+from core.redis import redis_client
 from models import User
 from repositories.user_repo import UserRepository
 from services.auth_service import AuthService
+from services.health_service import HealthService
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -33,3 +35,7 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return auth_service.get_user_from_token(credentials.credentials)
+
+
+def get_health_service() -> HealthService:
+    return HealthService(engine, redis_client)
