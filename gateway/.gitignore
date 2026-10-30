@@ -1,0 +1,138 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff: (genel python projelerinde de kalabilir)
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+#   For a library or package, you might want to ignore these files since they are
+#   local code
+.python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to checkin Pipfile.lock into version control.
+#   However, in some cases developers prefer to keep it ignored, uncomment the line below if needed:
+# Pipfile.lock
+
+# Poetry
+#   Similar to Pipfile.lock, it is generally recommended to checkin poetry.lock into version control.
+#   This is a strict policy for application dependencies.
+# poetry.lock
+
+# pdm
+#   Similar to Pyproject.toml, it's generally recommended to checkin pdm.lock into version control.
+.pdm.toml
+.pdm-python
+
+# PEP 582; used by e.g. pdm and some other tools
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments (Sanal Ortamlar - En Önemlisi)
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.roperproject
+
+# IDEs and Editors (VS Code, PyCharm, etc.)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# FastAPI / Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+
+# Alembic (Eğer migrations veritabanı dosyaları oluşturursa veya local DB bağlantı testleri kalırsa)
+# Not: alembic/versions klasöründeki migration scriptlerini version control'e atmalısınız!
+# Sadece local veritabanı veya geçici dosyalar engellenir.
