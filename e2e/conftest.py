@@ -52,9 +52,9 @@ def redis_client(settings: Settings) -> Iterator[Redis]:
     client.close()
 
 
-def _service_client(base_url: str, name: str, timeout: float) -> ApiClient:
+def _service_client(base_url: str, name: str, timeout: float, probe_path: str = "/openapi.json") -> ApiClient:
     client = ApiClient(base_url, name, timeout)
-    if not client.is_reachable():
+    if not client.is_reachable(probe_path):
         client.close()
         pytest.exit(f"{name} is not reachable at {base_url}. Start it before running the e2e suite.", returncode=1)
     return client
@@ -74,6 +74,19 @@ def restaurant_api(settings: Settings) -> Iterator[RestaurantServiceApi]:
     )
     yield RestaurantServiceApi(client)
     client.close()
+
+
+@pytest.fixture(scope="session")
+def gateway_client(settings: Settings) -> Iterator[ApiClient]:
+    """Only requested by gateway cases, so the rest of the suite runs without the gateway."""
+    client = _service_client(settings.GATEWAY_URL, "gateway", settings.HTTP_TIMEOUT_SECONDS, "/health")
+    yield client
+    client.close()
+
+
+@pytest.fixture(scope="session")
+def gateway_user_api(gateway_client: ApiClient) -> UserServiceApi:
+    return UserServiceApi(gateway_client)
 
 
 @pytest.fixture(scope="session")

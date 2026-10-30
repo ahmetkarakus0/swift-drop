@@ -14,6 +14,7 @@ Servislerin çalışan hâllerine gerçek HTTP istekleri atan ve sonuçları do�
 
    - user-service: http://127.0.0.1:8000
    - restaurant-service: http://127.0.0.1:8001
+   - gateway: http://127.0.0.1:8080 (sadece `tests/gateway` case'leri için gerekli)
 
    Servisler veya veritabanı erişilemezse test oturumu açıklayıcı bir hata mesajıyla hemen durur.
 
@@ -32,6 +33,7 @@ copy .env.example .env          # Linux/macOS: cp .env.example .env
 | Değişken | Açıklama |
 |---|---|
 | `USER_SERVICE_URL`, `RESTAURANT_SERVICE_URL` | Servislerin adresleri |
+| `GATEWAY_URL` | Gateway adresi |
 | `USER_DB_URL`, `RESTAURANT_DB_URL` | Servis veritabanlarına doğrudan bağlantı |
 | `REDIS_URL` | user-service'in kullandığı Redis (token iptali kontrolleri için) |
 | `TEST_DATA_PREFIX` | Testlerin oluşturduğu tüm kayıtların başına eklenen prefix (varsayılan `e2e_test`); temizlik buna göre yapılır |
@@ -49,7 +51,7 @@ pytest -k merchant                      # isminde "merchant" geçenler
 pytest --log-cli-level=INFO             # tüm HTTP istek/yanıtlarını canlı göster
 ```
 
-Tanımlı marker'lar: `user_service`, `restaurant_service`, `cross_service`, `smoke` (bkz. `pytest.ini`).
+Tanımlı marker'lar: `user_service`, `restaurant_service`, `cross_service`, `gateway`, `smoke` (bkz. `pytest.ini`).
 
 ## Klasör Yapısı
 
@@ -69,6 +71,7 @@ e2e/
     user_service/        sadece user-service'i ilgilendiren case'ler
     restaurant_service/  restaurant-service case'leri
     cross_service/       birden fazla servisi kapsayan case'ler
+    gateway/             istekleri gateway üzerinden atan case'ler
 ```
 
 ## Fixture'lar
@@ -79,6 +82,8 @@ e2e/
 | `user_db`, `restaurant_db` | `Database` nesnesi; doğrudan SQL çalıştırmak için |
 | `redis_client` | user-service Redis bağlantısı |
 | `user_api`, `restaurant_api` | Servis endpoint'lerine istek atan wrapper'lar; her metot ham `httpx.Response` döner |
+| `gateway_client` | Gateway'e istek atan `ApiClient`; sadece isteyen case'ler gateway'in ayakta olmasını gerektirir |
+| `gateway_user_api` | `UserServiceApi` wrapper'ı, ama istekleri gateway üzerinden atar |
 | `actors` | Senaryonun ihtiyaç duyduğu kullanıcıyı tek satırda hazırlar |
 
 `actors` mümkün olan her adımı gerçek API üzerinden yapar; endpoint'i olmayan tek adım olan admin oluşturma DB üzerinden yapılır:
@@ -171,3 +176,9 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 
 | # | Case | Test dosyası | Durum |
 |---|---|---|---|
+
+### Gateway
+
+| # | Case | Test dosyası | Durum |
+|---|---|---|---|
+| G1 | Müşteri gateway üzerinden kayıt olur, e-postasını doğrular, giriş yapar ve `/api/auth/me` ile kendi bilgilerini alır | `tests/gateway/test_customer_auth_through_gateway.py` | Yazıldı |
