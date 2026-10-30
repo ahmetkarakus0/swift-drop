@@ -46,6 +46,12 @@ alembic/        database migrations
    python main.py
    ```
 
+5. (Optional) Seed an admin user from `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env`. Running it again does nothing if the user already exists:
+
+   ```bash
+   python -m seeds.admin
+   ```
+
 API docs are available at http://127.0.0.1:8000/docs.
 
 ## Endpoints
