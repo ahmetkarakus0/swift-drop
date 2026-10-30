@@ -1,40 +1,45 @@
 # Tables
 
-## restaurants
+## baskets
 - id: uuid, primary key
 
-- merchant_id: uuid | no foreign_key, belongs to merchant table in users_db.
+- user_id: uuid | no foreign_key, belongs to users table in user_db.
+- restaurant_id: uuid | no foreign_key, belongs to restaurants table in restaurant_db.
 
-- name: string
-- phone_number: string
-- is_open: boolean
-- rating: float
-- is_active: boolean
-- country: string
-- city: string
-- district: string
-- neighborhood: string
-- postal_code: string
-- address_line1: string
-- address_line2: string
 - created_at: timestamp
+- updated_at: timestamp
 
-## categories
-- id: integer, primary key
+## basket_items
+- id: uuid, primary key
 
-- restaurant_id: uuid, foreign key to restaurants.id
+- basket_id: uuid, foreign key to baskets.id
+- item_id: integer | no foreign_key, belongs to items table in restaurant_db.
 
-- name: string
-- is_active: boolean
+- item_name: string
+- quantity: integer
+- price: decimal
 - created_at: timestamp
+- updated_at: timestamp
 
-## items
-- id: integer, primary key
+## orders
+- id: uuid, primary key
 
-- category_id: integer, foreign key to categories.id
+- user_id: uuid | no foreign_key, belongs to users table in user_db.
+- restaurant_id: uuid | no foreign_key, belongs to restaurants table in restaurant_db.
+- courier_id: uuid | null | no foreign_key, belongs to couriers table in user_db.
 
-- name: string
-- description: string
-- price: float
-- is_active: boolean
+- status: enum (pending, confirmed, preparing, ready_for_pickup, on_the_way, delivered, cancelled)
+- total_price: decimal
+- delivery_address: string
 - created_at: timestamp
+- updated_at: timestamp
+
+## order_items
+- id: uuid, primary key
+
+- order_id: uuid, foreign key to orders.id
+- item_id: integer | no foreign_key, belongs to items table in restaurant_db.
+
+- item_name: string
+- quantity: integer
+- price: decimal
