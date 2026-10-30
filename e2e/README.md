@@ -176,6 +176,7 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 
 | # | Case | Test dosyası | Durum |
 |---|---|---|---|
+| C1 | Merchant doğrulanmadan restoran oluşturamaz (önce `User is not verified`, e-posta doğrulandıktan sonra `Merchant is not verified`); admin merchant'ı doğruladıktan sonra aynı token ile restoran oluşturur | `tests/cross_service/test_merchant_verification_gates_restaurant_creation.py` | Yazıldı |
 
 ### Gateway
 
