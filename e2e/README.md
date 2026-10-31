@@ -228,7 +228,7 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 |---|---|---|---|
 | S8 | İki restorandan sepet: müşteri iki restorandan ürün ekler (iki sepet), miktar değiştirir, ürün çıkarır, bir sepeti sipariş eder; diğer sepet kalır ve sonra sipariş edilir. Her merchant sadece kendi siparişini alır | `tests/stories/test_s08_baskets_from_two_restaurants.py` | Yazıldı |
 | S9 | Tekrar gelen müşteri: müşteri zaman içinde birkaç sipariş verir; merchant bazılarını kabul eder, bazılarını iptal eder ve durum filtresiyle bekleyen / hazırlanan / biten siparişleri görür (filtresiz liste en yeniden eskiye sıralı) | `tests/stories/test_s09_repeat_customer_and_status_filter.py` | Yazıldı |
-| S10 | Logout her yerde geçerli: müşteri sipariş sürecinin ortasında çıkış yapar; eski token'ı order-service ve restaurant-service tarafından da reddedilir. Tekrar giriş yapıp siparişi tamamlar | | Planlandı |
+| S10 | Logout her yerde geçerli: müşteri sipariş sürecinin ortasında çıkış yapar; eski token'ı order-service ve restaurant-service tarafından da reddedilir. Merchant da çıkış yapar ve eski token'ı restaurant-service'te reddedilir. İkisi tekrar giriş yapar; sepet duruyordur, müşteri siparişi verir, merchant kabul eder | `tests/stories/test_s10_logout_applies_everywhere.py` | Yazıldı |
 | S11 | Akış ortasında hesap pasife alınır: aktif siparişleri olan merchant pasife alınır (endpoint olmadığı için DB üzerinden); merchant siparişleri yönetemez, müşterinin siparişi olduğu durumda kalır | | Planlandı |
 
 #### Gateway
