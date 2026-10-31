@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
@@ -33,3 +34,11 @@ class ItemResponse(BaseModel):
     price: Decimal
     is_active: bool
     created_at: datetime
+
+
+class OrderableItemResponse(BaseModel):
+    id: int
+    name: str
+    price: Decimal
+    restaurant_id: uuid.UUID
+    restaurant_is_open: bool

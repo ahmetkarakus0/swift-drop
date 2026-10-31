@@ -8,6 +8,8 @@ ROUTES: dict[str, str] = {
     "restaurants": settings.RESTAURANT_SERVICE_URL,
     "categories": settings.RESTAURANT_SERVICE_URL,
     "items": settings.RESTAURANT_SERVICE_URL,
+    "baskets": settings.ORDER_SERVICE_URL,
+    "orders": settings.ORDER_SERVICE_URL,
 }
 
 

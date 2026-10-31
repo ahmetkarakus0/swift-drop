@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, contains_eager
 
 from models import Category, Item, Restaurant
 
@@ -21,6 +21,20 @@ class ItemRepository:
                 Restaurant.merchant_id == merchant_id,
                 Restaurant.is_active.is_(True),
             )
+        )
+
+    def get_orderable(self, item_id: int) -> Optional[Item]:
+        return self.db.scalar(
+            select(Item)
+            .join(Item.category)
+            .join(Category.restaurant)
+            .where(
+                Item.id == item_id,
+                Item.is_active.is_(True),
+                Category.is_active.is_(True),
+                Restaurant.is_active.is_(True),
+            )
+            .options(contains_eager(Item.category).contains_eager(Category.restaurant))
         )
 
     def list_by_category(self, category_id: int) -> list[Item]:

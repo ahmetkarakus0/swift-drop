@@ -4,7 +4,10 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 
 from core.database import engine
+from core.restaurant_service import restaurant_service_client
 from core.user_service import user_service_client
+from routes.basket_route import router as basket_router
+from routes.order_route import router as order_router
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
 
@@ -13,6 +16,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(
 async def lifespan(app: FastAPI):
     yield
     user_service_client.close()
+    restaurant_service_client.close()
     engine.dispose()
 
 
@@ -23,6 +27,8 @@ app = FastAPI(
 )
 
 router = APIRouter(prefix="/api")
+router.include_router(basket_router)
+router.include_router(order_router)
 
 app.include_router(router)
 

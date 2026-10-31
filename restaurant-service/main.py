@@ -6,6 +6,7 @@ from fastapi import APIRouter, FastAPI
 from core.database import engine
 from core.user_service import user_service_client
 from routes.category_route import router as category_router
+from routes.internal_route import router as internal_router
 from routes.item_route import router as item_router
 from routes.restaurant_route import router as restaurant_router
 
@@ -31,6 +32,7 @@ router.include_router(category_router)
 router.include_router(item_router)
 
 app.include_router(router)
+app.include_router(internal_router)
 
 if __name__ == "__main__":
     import uvicorn

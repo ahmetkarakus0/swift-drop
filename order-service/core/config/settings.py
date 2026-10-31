@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     USER_SERVICE_URL: str = "http://127.0.0.1:8000"
     USER_SERVICE_TIMEOUT_SECONDS: float = 5.0
 
+    RESTAURANT_SERVICE_URL: str = "http://127.0.0.1:8001"
+    RESTAURANT_SERVICE_TIMEOUT_SECONDS: float = 5.0
+
 
 @lru_cache
 def get_settings() -> Settings:

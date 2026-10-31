@@ -5,7 +5,7 @@ from fastapi import HTTPException, status
 from models import Item
 from repositories.category_repo import CategoryRepository
 from repositories.item_repo import ItemRepository
-from schemas.item_schema import ItemCreate, ItemUpdate
+from schemas.item_schema import ItemCreate, ItemUpdate, OrderableItemResponse
 
 
 class ItemService:
@@ -35,6 +35,19 @@ class ItemService:
 
     def delete(self, merchant_id: uuid.UUID, item_id: int) -> None:
         self.item_repo.delete(self.get(merchant_id, item_id))
+
+    def get_orderable(self, item_id: int) -> OrderableItemResponse:
+        item = self.item_repo.get_orderable(item_id)
+        if item is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found")
+        restaurant = item.category.restaurant
+        return OrderableItemResponse(
+            id=item.id,
+            name=item.name,
+            price=item.price,
+            restaurant_id=restaurant.id,
+            restaurant_is_open=restaurant.is_open,
+        )
 
     def _ensure_category_owned(self, merchant_id: uuid.UUID, category_id: int) -> None:
         if self.category_repo.get_owned(category_id, merchant_id) is None:
