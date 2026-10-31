@@ -218,7 +218,7 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
 | S4 | Merchant işe başlar: kapalı restoran açar, menüyü kurar; müşteri sipariş vermeye çalışır ve `Restaurant is closed` alır. Merchant restoranı açar, müşteri sipariş verir ve sipariş merchant'ın listesine düşer. Gün sonunda merchant restoranı kapatır, müşteri tekrar `Restaurant is closed` alır | `tests/stories/test_s04_merchant_opens_for_business.py` | Yazıldı |
-| S5 | Müşteri alışveriş yaparken merchant menüyü değiştirir: ürün sepetteyken fiyatı değişir, sonra ürün pasife alınır; müşteri siparişi verir / ürünü tekrar ekler. Siparişin hangi fiyatla ve hangi koşulda oluştuğu sabitlenir | | Planlandı |
+| S5 | Müşteri alışveriş yaparken merchant menüyü değiştirir: ürün sepetteyken fiyatı değişir, sonra ürün pasife alınır; müşteri siparişi verir / ürünü tekrar ekler. Siparişin hangi fiyatla ve hangi koşulda oluştuğu sabitlenir. **Bulgu:** sepet ürünün eklendiği andaki fiyatı tutar ve sipariş verilirken restaurant-service'e tekrar sorulmaz; fiyatı artmış ürün eski fiyattan, pasife alınmış ürün de sorunsuz sipariş edilir. Menü sadece ürün sepete eklenirken tekrar okunur (aynı ürünü tekrar eklemek satırın fiyatını günceller, pasif ürün eklenemez) | `tests/stories/test_s05_menu_changes_while_customer_shops.py` | Yazıldı |
 | S6 | Merchant restoranı kapatır: müşterinin dolu bir sepeti ve bekleyen siparişi varken merchant restoranı siler. Sepetin siparişe dönüşüp dönüşmediği ve bekleyen siparişin akıbeti sabitlenir | | Planlandı |
 | S7 | İki merchant, ayrı veri: A ve B'nin restoranları sipariş alır; her biri sadece kendi siparişlerini görür ve yönetir, B, A'nın siparişine dokunamaz | | Planlandı |
 
