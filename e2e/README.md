@@ -197,8 +197,6 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 
 | # | Case | Test dosyası | Durum |
 |---|---|---|---|
-| C2 | Doğrulanmış müşteri ve onaylı merchant; merchant açık restoran, kategori ve ürün ekler; müşteri ürünü sepete ekleyip sipariş verir (sepet silinir). Merchant ilk siparişi sırayla accept → prepare → ready-for-pickup yapar (sonrasında cancel 409); ikinci siparişi accept → prepare → cancel yapar (sonrasında ready-for-pickup 409). Her adım `order_db` üzerinden de doğrulanır | `tests/cross_service/test_customer_order_lifecycle.py` | Yazıldı |
-
 ### Gateway
 
 | # | Case | Test dosyası | Durum |
@@ -236,6 +234,7 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 | S9 | Tekrar gelen müşteri: müşteri zaman içinde birkaç sipariş verir; merchant bazılarını kabul eder, bazılarını iptal eder ve durum filtresiyle bekleyen / hazırlanan / biten siparişleri görür (filtresiz liste en yeniden eskiye sıralı) | `tests/stories/test_s09_repeat_customer_and_status_filter.py` | Yazıldı |
 | S10 | Logout her yerde geçerli: müşteri sipariş sürecinin ortasında çıkış yapar; eski token'ı order-service ve restaurant-service tarafından da reddedilir. Merchant da çıkış yapar ve eski token'ı restaurant-service'te reddedilir. İkisi tekrar giriş yapar; sepet duruyordur, müşteri siparişi verir, merchant kabul eder | `tests/stories/test_s10_logout_applies_everywhere.py` | Yazıldı |
 | S11 | Akış ortasında hesap pasife alınır: aktif siparişleri olan merchant pasife alınır (endpoint olmadığı için DB üzerinden); merchant siparişleri yönetemez ve giriş yapamaz (`User is inactive`), müşterinin siparişi olduğu durumda kalır. Tekrar aktifleştirilince aynı token ile siparişleri yönetmeye devam eder. **Bulgu:** merchant pasifken restoranı açık kalır ve müşteriler sipariş vermeye devam edebilir, ama bu siparişleri kabul edecek kimse yoktur | `tests/stories/test_s11_merchant_deactivated_mid_flow.py` | Yazıldı |
+| S16 | Merchant siparişi sonuna kadar götürür: müşteri sipariş verir (sepet silinir); merchant ilk siparişi accept → prepare → ready-for-pickup yapar, sonrasında iptal etmeye çalışınca 409 alır. İkinci siparişi accept → prepare → cancel yapar, sonrasında ready-for-pickup 409 döner. Her adım `order_db` üzerinden de doğrulanır | `tests/stories/test_s16_merchant_takes_order_to_the_end.py` | Yazıldı |
 
 #### Gateway
 
