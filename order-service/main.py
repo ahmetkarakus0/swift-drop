@@ -3,7 +3,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
 
+from core.config.settings import settings
 from core.database import engine
+from core.kafka import kafka_producer
 from core.restaurant_service import restaurant_service_client
 from core.user_service import user_service_client
 from routes.basket_route import router as basket_router
@@ -11,11 +13,15 @@ from routes.internal_route import router as internal_router
 from routes.order_route import router as order_router
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
+    remaining = kafka_producer.flush(settings.KAFKA_FLUSH_TIMEOUT_SECONDS)
+    if remaining:
+        logger.warning("%d order events were not delivered to Kafka", remaining)
     user_service_client.close()
     restaurant_service_client.close()
     engine.dispose()

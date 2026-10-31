@@ -2,11 +2,14 @@ import uuid
 from typing import Annotated
 
 import httpx
+from confluent_kafka import Producer
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from core.config.settings import settings
 from core.database import get_db
+from core.kafka import get_kafka_producer
 from core.restaurant_service import get_restaurant_service_client
 from core.user_service import get_user_service_client
 from repositories.basket_repo import BasketRepository
@@ -15,6 +18,7 @@ from schemas.auth_schema import CurrentUser, UserRole
 from services.auth_service import AuthService
 from services.basket_service import BasketService
 from services.catalog_service import CatalogService
+from services.event_publisher import OrderEventPublisher
 from services.order_service import OrderService
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -30,6 +34,12 @@ def get_catalog_service(
     client: Annotated[httpx.Client, Depends(get_restaurant_service_client)],
 ) -> CatalogService:
     return CatalogService(client)
+
+
+def get_order_event_publisher(
+    producer: Annotated[Producer, Depends(get_kafka_producer)],
+) -> OrderEventPublisher:
+    return OrderEventPublisher(producer, settings.KAFKA_ORDER_EVENTS_TOPIC)
 
 
 def get_bearer_token(
@@ -77,5 +87,6 @@ def get_basket_service(
 def get_order_service(
     basket_repo: Annotated[BasketRepository, Depends(get_basket_repository)],
     order_repo: Annotated[OrderRepository, Depends(get_order_repository)],
+    event_publisher: Annotated[OrderEventPublisher, Depends(get_order_event_publisher)],
 ) -> OrderService:
-    return OrderService(basket_repo, order_repo)
+    return OrderService(basket_repo, order_repo, event_publisher)

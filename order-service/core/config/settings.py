@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     RESTAURANT_SERVICE_URL: str = "http://127.0.0.1:8001"
     RESTAURANT_SERVICE_TIMEOUT_SECONDS: float = 5.0
 
+    KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
+    KAFKA_ORDER_EVENTS_TOPIC: str = "order-events"
+    KAFKA_FLUSH_TIMEOUT_SECONDS: float = 10.0
+
 
 @lru_cache
 def get_settings() -> Settings:

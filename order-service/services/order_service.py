@@ -7,12 +7,19 @@ from models import Order, OrderItem, OrderStatus
 from repositories.basket_repo import BasketRepository
 from repositories.order_repo import OrderRepository
 from schemas.order_schema import OrderCreate
+from services.event_publisher import OrderEventPublisher
 
 
 class OrderService:
-    def __init__(self, basket_repo: BasketRepository, order_repo: OrderRepository):
+    def __init__(
+        self,
+        basket_repo: BasketRepository,
+        order_repo: OrderRepository,
+        event_publisher: OrderEventPublisher,
+    ):
         self.basket_repo = basket_repo
         self.order_repo = order_repo
+        self.event_publisher = event_publisher
 
     def place(self, user_id: uuid.UUID, data: OrderCreate) -> Order:
         basket = self.basket_repo.get_owned_for_update(data.basket_id, user_id)
@@ -37,7 +44,9 @@ class OrderService:
             delivery_address=data.delivery_address,
             items=items,
         )
-        return self.order_repo.create_from_basket(order, basket)
+        order = self.order_repo.create_from_basket(order, basket)
+        self.event_publisher.order_created(order)
+        return order
 
     def get_all_for_restaurant(
         self, restaurant_id: uuid.UUID, order_status: Optional[OrderStatus] = None
@@ -89,5 +98,8 @@ class OrderService:
                 status.HTTP_409_CONFLICT,
                 f"Only {allowed} orders can be {action}; order is {order.status.value}",
             )
+        previous_status = order.status
         order.status = to_status
-        return self.order_repo.save(order)
+        order = self.order_repo.save(order)
+        self.event_publisher.order_status_updated(order, previous_status)
+        return order

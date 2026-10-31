@@ -8,11 +8,12 @@ Swift Drop's order service. Lets customers fill baskets and place orders from th
 - SQLAlchemy 2 + PostgreSQL (psycopg 3)
 - Alembic for migrations
 - httpx for calling the user service and the restaurant service
+- Kafka (confluent-kafka) for publishing order events
 
 ## Project Structure
 
 ```
-core/           settings, database session, user/restaurant service clients, shared dependencies
+core/           settings, database session, user/restaurant service clients, Kafka producer, shared dependencies
 models/         SQLAlchemy models (baskets, basket items, orders, order items)
 schemas/        Pydantic request/response models
 repositories/   database access
@@ -23,7 +24,7 @@ alembic/        database migrations
 
 ## Setup
 
-1. Start PostgreSQL from the repository root:
+1. Start PostgreSQL and Kafka from the repository root:
 
    ```bash
    docker compose up -d
@@ -37,7 +38,7 @@ alembic/        database migrations
    pip install -r requirements.txt
    ```
 
-3. Copy `.env.example` to `.env` and fill in the values. `USER_SERVICE_URL` and `RESTAURANT_SERVICE_URL` must point to running services.
+3. Copy `.env.example` to `.env` and fill in the values. `USER_SERVICE_URL` and `RESTAURANT_SERVICE_URL` must point to running services. `KAFKA_BOOTSTRAP_SERVERS` defaults to `localhost:9092`, the Kafka broker from `docker-compose.yml`.
 
 4. Apply migrations and start the service:
 
@@ -68,6 +69,44 @@ A customer has one basket per restaurant. When an item is added, its name, price
 ## Orders
 
 An order is placed from a basket. The basket's items are copied into the order with the prices saved in the basket, the total is calculated, the status starts as `pending`, and the basket is deleted. An empty basket returns `400`.
+
+## Events
+
+Order events are published to the Kafka topic `order-events` (`KAFKA_ORDER_EVENTS_TOPIC`). The message key is the order ID, so all events of one order go to the same partition and are consumed in order. The value is JSON and the `event_type` header repeats the event type.
+
+| Event type | When | `data` |
+|---|---|---|
+| `order.created` | An order is placed | The full order, same shape as the `POST /api/orders` response |
+| `order.status_updated` | An order's status changes (accept, prepare, ready for pickup, cancel) | `order_id`, `user_id`, `restaurant_id`, `courier_id`, `previous_status`, `status`, `updated_at` |
+
+Every event has this envelope:
+
+```json
+{
+  "event_id": "uuid",
+  "occurred_at": "2026-10-31T20:09:50.856409Z",
+  "event_type": "order.status_updated",
+  "data": {}
+}
+```
+
+Events are published after the database commit and publishing never fails the request. If Kafka is down, the order is still saved, and the failed delivery is logged. Undelivered events are lost; consumers should not treat the topic as a complete record. Unsent events are flushed on shutdown.
+
+The topic is created automatically by the first published event.
+
+### Inspecting events
+
+`docker compose up -d` also starts Kafbat UI at http://localhost:8090 (`KAFKA_UI_PORT`). Open **Topics → order-events → Messages** to browse events, including their keys and headers.
+
+From the command line, using the tools inside the Kafka container:
+
+```bash
+# list topics
+docker exec swift-drop-kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+
+# print all order events from the beginning and keep following new ones (Ctrl+C to stop)
+docker exec -it swift-drop-kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic order-events --from-beginning --property print.key=true --property print.headers=true
+```
 
 ## Endpoints
 
