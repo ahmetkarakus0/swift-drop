@@ -1,8 +1,9 @@
 import uuid
+from typing import Optional
 
 from fastapi import HTTPException, status
 
-from models import Order, OrderItem
+from models import Order, OrderItem, OrderStatus
 from repositories.basket_repo import BasketRepository
 from repositories.order_repo import OrderRepository
 from schemas.order_schema import OrderCreate
@@ -37,3 +38,8 @@ class OrderService:
             items=items,
         )
         return self.order_repo.create_from_basket(order, basket)
+
+    def get_all_for_restaurant(
+        self, restaurant_id: uuid.UUID, order_status: Optional[OrderStatus] = None
+    ) -> list[Order]:
+        return self.order_repo.list_by_restaurant(restaurant_id, order_status)

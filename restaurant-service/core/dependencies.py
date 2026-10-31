@@ -7,6 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from core.database import get_db
+from core.order_service import get_order_service_client
 from core.user_service import get_user_service_client
 from repositories.category_repo import CategoryRepository
 from repositories.item_repo import ItemRepository
@@ -15,6 +16,7 @@ from schemas.auth_schema import CurrentUser, UserRole
 from services.auth_service import AuthService
 from services.category_service import CategoryService
 from services.item_service import ItemService
+from services.order_service import OrderService
 from services.restaurant_service import RestaurantService
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -83,3 +85,10 @@ def get_item_service(
     item_repo: Annotated[ItemRepository, Depends(get_item_repository)],
 ) -> ItemService:
     return ItemService(category_repo, item_repo)
+
+
+def get_order_service(
+    client: Annotated[httpx.Client, Depends(get_order_service_client)],
+    restaurant_repo: Annotated[RestaurantRepository, Depends(get_restaurant_repository)],
+) -> OrderService:
+    return OrderService(client, restaurant_repo)

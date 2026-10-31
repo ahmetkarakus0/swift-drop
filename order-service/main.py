@@ -7,6 +7,7 @@ from core.database import engine
 from core.restaurant_service import restaurant_service_client
 from core.user_service import user_service_client
 from routes.basket_route import router as basket_router
+from routes.internal_route import router as internal_router
 from routes.order_route import router as order_router
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
@@ -31,6 +32,7 @@ router.include_router(basket_router)
 router.include_router(order_router)
 
 app.include_router(router)
+app.include_router(internal_router)
 
 if __name__ == "__main__":
     import uvicorn

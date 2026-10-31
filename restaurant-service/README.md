@@ -7,12 +7,12 @@ Swift Drop's restaurant service. Lets merchants manage their restaurants, menu c
 - FastAPI
 - SQLAlchemy 2 + PostgreSQL (psycopg 3)
 - Alembic for migrations
-- httpx for calling the user service
+- httpx for calling the user service and the order service
 
 ## Project Structure
 
 ```
-core/           settings, database session, user service client, shared dependencies
+core/           settings, database session, user/order service clients, shared dependencies
 models/         SQLAlchemy models (restaurants, categories, items)
 schemas/        Pydantic request/response models
 repositories/   database access
@@ -37,7 +37,7 @@ alembic/        database migrations
    pip install -r requirements.txt
    ```
 
-3. Copy `.env.example` to `.env` and fill in the values. `USER_SERVICE_URL` must point to a running user service.
+3. Copy `.env.example` to `.env` and fill in the values. `USER_SERVICE_URL` must point to a running user service, and `ORDER_SERVICE_URL` to a running order service for listing orders.
 
 4. Apply migrations and start the service:
 
@@ -75,6 +75,7 @@ Merchants can only see and change their own restaurants, categories and items; a
 | GET | `/api/items/{item_id}` | Get an item |
 | PATCH | `/api/items/{item_id}` | Update an item |
 | DELETE | `/api/items/{item_id}` | Delete an item |
+| GET | `/api/restaurants/{restaurant_id}/orders` | List orders placed at a restaurant, newest first. Optional `?status=` filter (`pending`, `confirmed`, `preparing`, `ready_for_pickup`, `on_the_way`, `delivered`, `cancelled`). Orders are fetched from the order service; returns `503` if it can't be reached |
 
 ## Internal Endpoints
 

@@ -50,7 +50,7 @@ API docs are available at http://127.0.0.1:8002/docs.
 
 ## Authentication
 
-Every endpoint requires `Authorization: Bearer <access_token>`, using an access token issued by the user service. The token is checked by calling the user service's `GET /api/auth/me`, so the user service must be running.
+Every `/api` endpoint requires `Authorization: Bearer <access_token>`, using an access token issued by the user service. The token is checked by calling the user service's `GET /api/auth/me`, so the user service must be running.
 
 Only customers can use this service; other roles get `403`. If the user service can't be reached, requests fail with `503`.
 
@@ -80,6 +80,14 @@ An order is placed from a basket. The basket's items are copied into the order w
 | DELETE | `/api/baskets/{basket_id}/items/{basket_item_id}` | Remove an item from the basket |
 | DELETE | `/api/baskets/{basket_id}` | Delete a basket |
 | POST | `/api/orders` | Place an order from a basket. Body: `{"basket_id": "...", "delivery_address": "..."}` |
+
+## Internal Endpoints
+
+These are for other services and are mounted outside `/api`, so the gateway never forwards them. They require no authentication.
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/internal/restaurants/{restaurant_id}/orders` | List a restaurant's orders with their items, newest first. Optional `?status=` filter. Used by the restaurant service |
 
 ## Tables
 
