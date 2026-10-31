@@ -43,3 +43,15 @@ class OrderService:
         self, restaurant_id: uuid.UUID, order_status: Optional[OrderStatus] = None
     ) -> list[Order]:
         return self.order_repo.list_by_restaurant(restaurant_id, order_status)
+
+    def accept(self, restaurant_id: uuid.UUID, order_id: uuid.UUID) -> Order:
+        order = self.order_repo.get_by_restaurant_for_update(order_id, restaurant_id)
+        if order is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Order not found")
+        if order.status != OrderStatus.PENDING:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                f"Only pending orders can be accepted; order is {order.status.value}",
+            )
+        order.status = OrderStatus.CONFIRMED
+        return self.order_repo.save(order)

@@ -88,6 +88,7 @@ These are for other services and are mounted outside `/api`, so the gateway neve
 | Method | Path | Description |
 |---|---|---|
 | GET | `/internal/restaurants/{restaurant_id}/orders` | List a restaurant's orders with their items, newest first. Optional `?status=` filter. Used by the restaurant service |
+| PUT | `/internal/restaurants/{restaurant_id}/orders/{order_id}/accept` | Change a restaurant's order from `pending` to `confirmed`. Returns `404` if the order doesn't belong to the restaurant and `409` if it isn't pending. Used by the restaurant service |
 
 ## Tables
 

@@ -18,3 +18,13 @@ def list_orders(
     status: Optional[OrderStatus] = None,
 ):
     return order_service.get_all(merchant_id, restaurant_id, status)
+
+
+@router.put("/restaurants/{restaurant_id}/orders/{order_id}/accept", response_model=OrderResponse)
+def accept_order(
+    restaurant_id: uuid.UUID,
+    order_id: uuid.UUID,
+    merchant_id: Annotated[uuid.UUID, Depends(get_current_merchant_id)],
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.accept(merchant_id, restaurant_id, order_id)

@@ -76,6 +76,7 @@ Merchants can only see and change their own restaurants, categories and items; a
 | PATCH | `/api/items/{item_id}` | Update an item |
 | DELETE | `/api/items/{item_id}` | Delete an item |
 | GET | `/api/restaurants/{restaurant_id}/orders` | List orders placed at a restaurant, newest first. Optional `?status=` filter (`pending`, `confirmed`, `preparing`, `ready_for_pickup`, `on_the_way`, `delivered`, `cancelled`). Orders are fetched from the order service; returns `503` if it can't be reached |
+| PUT | `/api/restaurants/{restaurant_id}/orders/{order_id}/accept` | Accept an incoming order: its status changes from `pending` to `confirmed`. Returns the updated order, `404` if the order doesn't belong to the restaurant, `409` if it isn't pending, or `503` if the order service can't be reached |
 
 ## Internal Endpoints
 
