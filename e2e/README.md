@@ -88,6 +88,7 @@ e2e/
 | `redis_client` | user-service Redis bağlantısı |
 | `user_api`, `restaurant_api` | Servis endpoint'lerine istek atan wrapper'lar; her metot ham `httpx.Response` döner. `restaurant_api` merchant'ın sipariş işlemlerini (listeleme, accept, prepare, ready-for-pickup, cancel) de içerir |
 | `order_api` | order-service'e (sepet ve sipariş) istek atan wrapper; sadece isteyen case'ler order-service'in ayakta olmasını gerektirir |
+| `menus` | `menus.create(merchant, is_open=True, prices=("99.90",))` ile API üzerinden restoran + kategori + fiyat başına bir ürün kurar; dönen `Menu` nesnesinde `restaurant`, `category`, `items`, `item` (ilk ürün) ve `restaurant_id` bulunur |
 | `courier_api` | courier-service'e doğrudan istek atan wrapper; sadece isteyen case'ler courier-service'in ayakta olmasını gerektirir |
 | `courier_locations` | Redis'teki kurye konumlarını okur (`position(courier_id)` → `(lat, lon)` veya `None`); sorulan kuryelerin kayıtlarını case sonunda siler |
 | `gateway_client` | Gateway'e istek atan `ApiClient`; sadece isteyen case'ler gateway'in ayakta olmasını gerektirir |
@@ -208,7 +209,7 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
 | S1 | Kurye onboarding: kurye kayıt olur ve giriş yapar; konum göndermeye çalışır ve önce `User is not verified`, e-postasını doğruladıktan sonra `Courier is not verified` ile engellenir (Redis'e yazılmaz). Admin kuryeyi onaylar; aynı token ile konum gönderilir ve Redis'e yazılır | `tests/stories/test_s01_courier_onboarding.py` | Yazıldı |
-| S2 | Müşteri onboarding: müşteri kayıt olup giriş yapar; e-postasını doğrulamadan sepete ürün eklemeye çalışır ve `User is not verified` ile engellenir. E-postasını doğruladıktan sonra aynı token ile sepete ekler ve sipariş verir | | Planlandı |
+| S2 | Müşteri onboarding: müşteri kayıt olup giriş yapar; e-postasını doğrulamadan sepete ürün eklemeye çalışır ve `User is not verified` ile engellenir. E-postasını doğruladıktan sonra aynı token ile sepete ekler ve sipariş verir | `tests/stories/test_s02_customer_onboarding.py` | Yazıldı |
 | S3 | Admin başvuruları inceler: birkaç kurye ve merchant kayıt olur; admin kullanıcıları rol bazında listeler, bazılarını onaylar, bir merchant'ı `rejected` yapar. Sadece onaylananlar courier-service / restaurant-service'i kullanabilir | | Planlandı |
 
 #### Merchant ve Menü

@@ -11,6 +11,7 @@ from framework.config import Settings, get_settings
 from framework.courier_locations import CourierLocations
 from framework.db import Database
 from framework.http_client import ApiClient
+from framework.menus import Menus
 from framework.services import CourierServiceApi, OrderServiceApi, RestaurantServiceApi, UserServiceApi
 
 
@@ -129,6 +130,11 @@ def courier_locations(redis_client: Redis, settings: Settings) -> Iterator[Couri
 @pytest.fixture(scope="session")
 def actors(user_api: UserServiceApi, user_db: Database, settings: Settings) -> Actors:
     return Actors(user_api, user_db, settings)
+
+
+@pytest.fixture(scope="session")
+def menus(restaurant_api: RestaurantServiceApi) -> Menus:
+    return Menus(restaurant_api)
 
 
 @pytest.fixture(scope="session", autouse=True)
