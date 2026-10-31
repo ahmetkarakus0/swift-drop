@@ -153,5 +153,13 @@ class OrderServiceApi:
     def get_basket(self, token: str, basket_id: Id) -> httpx.Response:
         return self.client.get(f"/api/baskets/{basket_id}", token=token)
 
+    def update_basket_item(self, token: str, basket_id: Id, basket_item_id: Id, quantity: int) -> httpx.Response:
+        return self.client.patch(
+            f"/api/baskets/{basket_id}/items/{basket_item_id}", token=token, json={"quantity": quantity}
+        )
+
+    def remove_basket_item(self, token: str, basket_id: Id, basket_item_id: Id) -> httpx.Response:
+        return self.client.delete(f"/api/baskets/{basket_id}/items/{basket_item_id}", token=token)
+
     def place_order(self, token: str, payload: dict[str, Any]) -> httpx.Response:
         return self.client.post("/api/orders", token=token, json=payload)
