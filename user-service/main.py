@@ -9,6 +9,7 @@ from routes.auth_route import router as auth_router
 from routes.courier_route import router as courier_router
 from routes.health_route import router as health_router
 from routes.merchant_route import router as merchant_router
+from routes.user_route import router as user_router
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
 
@@ -30,6 +31,7 @@ router = APIRouter(prefix="/api")
 router.include_router(auth_router)
 router.include_router(courier_router)
 router.include_router(merchant_router)
+router.include_router(user_router)
 
 app.include_router(router)
 app.include_router(health_router)

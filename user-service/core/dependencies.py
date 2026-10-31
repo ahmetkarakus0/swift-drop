@@ -17,6 +17,7 @@ from services.auth_service import AuthService
 from services.courier_service import CourierService
 from services.health_service import HealthService
 from services.merchant_service import MerchantService
+from services.user_service import UserService
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -71,6 +72,12 @@ def require_roles(*roles: UserRole) -> Callable[..., User]:
         return current_user
 
     return checker
+
+
+def get_user_service(
+    user_repo: Annotated[UserRepository, Depends(get_user_repository)],
+) -> UserService:
+    return UserService(user_repo)
 
 
 def get_merchant_service(db: Annotated[Session, Depends(get_db)]) -> MerchantService:

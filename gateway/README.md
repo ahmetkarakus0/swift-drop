@@ -51,6 +51,7 @@ Requests are routed by the first path segment after `/api`. The path and query s
 | Path prefix | Service |
 |---|---|
 | `/api/auth/*` | User service |
+| `/api/users/*` | User service |
 | `/api/couriers/*` | User service |
 | `/api/merchants/*` | User service |
 | `/api/restaurants/*` | Restaurant service |

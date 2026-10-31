@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from models import User
+from models import User, UserRole
 
 
 class UserRepository:
@@ -16,6 +16,12 @@ class UserRepository:
 
     def get_by_email(self, email: str) -> Optional[User]:
         return self.db.scalar(select(User).where(User.email == email))
+
+    def get_all(self, role: Optional[UserRole], limit: int, offset: int) -> list[User]:
+        query = select(User).order_by(User.created_at.desc(), User.id)
+        if role is not None:
+            query = query.where(User.role == role)
+        return list(self.db.scalars(query.limit(limit).offset(offset)))
 
     def get_by_verification_link(self, token: str) -> Optional[User]:
         return self.db.scalar(select(User).where(User.user_verification_link == token))

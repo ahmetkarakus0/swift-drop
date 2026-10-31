@@ -3,6 +3,7 @@ from core.config.settings import settings
 # First path segment after /api -> upstream service base URL.
 ROUTES: dict[str, str] = {
     "auth": settings.USER_SERVICE_URL,
+    "users": settings.USER_SERVICE_URL,
     "couriers": settings.USER_SERVICE_URL,
     "merchants": settings.USER_SERVICE_URL,
     "restaurants": settings.RESTAURANT_SERVICE_URL,
