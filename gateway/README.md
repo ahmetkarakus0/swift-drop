@@ -33,9 +33,10 @@ main.py         app entry point, health check and catch-all proxy route
    |---|---|---|
    | `USER_SERVICE_URL` | `http://127.0.0.1:8000` | User service base URL |
    | `RESTAURANT_SERVICE_URL` | `http://127.0.0.1:8001` | Restaurant service base URL |
+   | `ORDER_SERVICE_URL` | `http://127.0.0.1:8002` | Order service base URL |
    | `UPSTREAM_TIMEOUT_SECONDS` | `10` | Timeout for requests to the services |
 
-3. Start the user service and the restaurant service (see their READMEs), then start the gateway:
+3. Start the user, restaurant and order services (see their READMEs), then start the gateway:
 
    ```bash
    python main.py
@@ -55,6 +56,8 @@ Requests are routed by the first path segment after `/api`. The path and query s
 | `/api/restaurants/*` | Restaurant service |
 | `/api/categories/*` | Restaurant service |
 | `/api/items/*` | Restaurant service |
+| `/api/baskets/*` | Order service |
+| `/api/orders/*` | Order service |
 
 For example, `POST http://127.0.0.1:8080/api/auth/login` is forwarded to `POST http://127.0.0.1:8000/api/auth/login`, and `GET http://127.0.0.1:8080/api/restaurants/1` to `GET http://127.0.0.1:8001/api/restaurants/1`.
 

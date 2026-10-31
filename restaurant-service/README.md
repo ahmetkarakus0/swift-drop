@@ -50,7 +50,7 @@ API docs are available at http://127.0.0.1:8001/docs.
 
 ## Authentication
 
-Every endpoint requires `Authorization: Bearer <access_token>`, using an access token issued by the user service. The token is checked by calling the user service's `GET /api/auth/me`, so the user service must be running.
+Every `/api` endpoint requires `Authorization: Bearer <access_token>`, using an access token issued by the user service. The token is checked by calling the user service's `GET /api/auth/me`, so the user service must be running.
 
 Only merchants can use this service. Requests are rejected with `403` if the user is not a merchant, or if the user service considers them ineligible (inactive, email not verified, or merchant not verified by an admin). If the user service can't be reached, requests fail with `503`.
 
@@ -75,3 +75,11 @@ Merchants can only see and change their own restaurants, categories and items; a
 | GET | `/api/items/{item_id}` | Get an item |
 | PATCH | `/api/items/{item_id}` | Update an item |
 | DELETE | `/api/items/{item_id}` | Delete an item |
+
+## Internal Endpoints
+
+These are for other services and are mounted outside `/api`, so the gateway never forwards them. They require no authentication.
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/internal/items/{item_id}` | Get an orderable item's `id`, `name`, `price`, `restaurant_id` and `restaurant_is_open`. Returns `404` if the item, its category or its restaurant is inactive. Used by the order service when items are added to a basket |
