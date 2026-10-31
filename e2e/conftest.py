@@ -1,6 +1,7 @@
 from typing import Iterator
 
 import pytest
+from confluent_kafka import KafkaException
 from redis import Redis
 from redis.exceptions import RedisError
 from sqlalchemy.exc import OperationalError
@@ -12,6 +13,7 @@ from framework.courier_locations import CourierLocations
 from framework.db import Database
 from framework.http_client import ApiClient
 from framework.menus import Menus
+from framework.order_events import OrderEvents
 from framework.services import CourierServiceApi, OrderServiceApi, RestaurantServiceApi, UserServiceApi
 
 
@@ -145,6 +147,19 @@ def courier_locations(redis_client: Redis, settings: Settings) -> Iterator[Couri
     yield locations
     if not settings.KEEP_TEST_DATA:
         locations.cleanup()
+
+
+@pytest.fixture
+def order_events(settings: Settings) -> Iterator[OrderEvents]:
+    """Only requested by event cases, so the rest of the suite runs without Kafka."""
+    try:
+        events = OrderEvents(
+            settings.KAFKA_BOOTSTRAP_SERVERS, settings.KAFKA_ORDER_EVENTS_TOPIC, settings.KAFKA_TIMEOUT_SECONDS
+        )
+    except KafkaException as exc:
+        pytest.fail(f"Cannot read {settings.KAFKA_ORDER_EVENTS_TOPIC} from Kafka: {exc}")
+    yield events
+    events.close()
 
 
 @pytest.fixture(scope="session")

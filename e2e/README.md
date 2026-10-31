@@ -4,7 +4,7 @@ Servislerin çalışan hâllerine gerçek HTTP istekleri atan ve sonuçları do�
 
 ## Ön Koşullar
 
-1. Postgres ve Redis ayakta olmalı (repo kökünden):
+1. Postgres, Redis ve Kafka ayakta olmalı (repo kökünden; Kafka sadece S13 için gerekli):
 
    ```bash
    docker compose up -d
@@ -38,6 +38,7 @@ copy .env.example .env          # Linux/macOS: cp .env.example .env
 | `GATEWAY_URL` | Gateway adresi |
 | `USER_DB_URL`, `RESTAURANT_DB_URL`, `ORDER_DB_URL` | Servis veritabanlarına doğrudan bağlantı |
 | `REDIS_URL` | user-service ve courier-service'in kullandığı Redis (token iptali ve kurye konumu kontrolleri için) |
+| `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_ORDER_EVENTS_TOPIC`, `KAFKA_TIMEOUT_SECONDS` | order-service'in sipariş olaylarını yayınladığı Kafka ve topic; olay bekleme süresi |
 | `COURIER_LOCATIONS_KEY` | courier-service'in kurye konumlarını tuttuğu Redis GEO anahtarı (varsayılan `courier-locations`) |
 | `TEST_DATA_PREFIX` | Testlerin oluşturduğu tüm kayıtların başına eklenen prefix (varsayılan `e2e_test`); temizlik buna göre yapılır |
 | `TEST_EMAIL_DOMAIN` | Test kullanıcılarının e-posta domain'i |
@@ -72,6 +73,7 @@ e2e/
     menus.py             hazır restoran menüleri (restoran + kategori + ürünler)
     cleanup.py           test verisinin temizlenmesi
     courier_locations.py Redis'teki kurye konumlarını okuma ve temizleme
+    order_events.py      Kafka'daki sipariş olaylarını okuma
   tests/
     user_service/        sadece user-service'i ilgilendiren case'ler
     restaurant_service/  restaurant-service case'leri
@@ -91,6 +93,7 @@ e2e/
 | `order_api` | order-service'e (sepet ve sipariş) istek atan wrapper; sadece isteyen case'ler order-service'in ayakta olmasını gerektirir |
 | `menus` | `menus.create(merchant, is_open=True, prices=("99.90",))` ile API üzerinden restoran + kategori + fiyat başına bir ürün kurar; dönen `Menu` nesnesinde `restaurant`, `category`, `items`, `item` (ilk ürün) ve `restaurant_id` bulunur |
 | `courier_api` | courier-service'e doğrudan istek atan wrapper; sadece isteyen case'ler courier-service'in ayakta olmasını gerektirir |
+| `order_events` | Kafka'daki `order-events` topic'ini fixture oluşturulduğu andaki sondan itibaren okur; `for_order(order_id, count)` o siparişin olaylarını yayın sırasıyla döner. Sadece isteyen case'ler Kafka'nın ayakta olmasını gerektirir |
 | `courier_locations` | Redis'teki kurye konumlarını okur (`position(courier_id)` → `(lat, lon)` veya `None`); sorulan kuryelerin kayıtlarını case sonunda siler |
 | `gateway_client` | Gateway'e istek atan `ApiClient`; sadece isteyen case'ler gateway'in ayakta olmasını gerektirir |
 | `gateway_user_api` | `UserServiceApi` wrapper'ı, ama istekleri gateway üzerinden atar |
@@ -244,5 +247,5 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
-| S13 | Sipariş olayları: sipariş verilip ready-for-pickup'a kadar ilerler; her adımda Kafka'daki `order-events` topic'ine doğru `previous_status` / `status` ile olay sırayla yayınlanır | | Planlandı |
+| S13 | Sipariş olayları: sipariş verilip ready-for-pickup'a kadar ilerler; her adımda Kafka'daki `order-events` topic'ine doğru `previous_status` / `status` ile olay sırayla yayınlanır (`order.created` ardından üç `order.status_updated`; key sipariş id'si, `event_type` header'ı payload ile aynı) | `tests/stories/test_s13_order_events_on_kafka.py` | Yazıldı |
 | S14 | Dispatch: birkaç kurye konum paylaşır; sipariş ready-for-pickup olunca dispatch en yakın kuryeyi atar; kurye siparişi alır, sipariş on-the-way ve delivered olur. dispatch-service henüz iskelet olduğu için beklemede | | Planlandı |

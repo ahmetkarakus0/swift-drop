@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     ORDER_DB_URL: str
     REDIS_URL: str
     COURIER_LOCATIONS_KEY: str = "courier-locations"
+    KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
+    KAFKA_ORDER_EVENTS_TOPIC: str = "order-events"
+    KAFKA_TIMEOUT_SECONDS: float = 10.0
 
     TEST_DATA_PREFIX: str = "e2e_test"
     TEST_EMAIL_DOMAIN: str = "e2e.swiftdrop.test"
