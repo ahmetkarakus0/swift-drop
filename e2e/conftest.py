@@ -119,6 +119,26 @@ def gateway_courier_api(gateway_client: ApiClient) -> CourierServiceApi:
     return CourierServiceApi(gateway_client)
 
 
+@pytest.fixture(scope="session")
+def gateway_restaurant_api(gateway_client: ApiClient) -> RestaurantServiceApi:
+    return RestaurantServiceApi(gateway_client)
+
+
+@pytest.fixture(scope="session")
+def gateway_order_api(gateway_client: ApiClient) -> OrderServiceApi:
+    return OrderServiceApi(gateway_client)
+
+
+@pytest.fixture(scope="session")
+def gateway_actors(gateway_user_api: UserServiceApi, user_db: Database, settings: Settings) -> Actors:
+    return Actors(gateway_user_api, user_db, settings)
+
+
+@pytest.fixture(scope="session")
+def gateway_menus(gateway_restaurant_api: RestaurantServiceApi) -> Menus:
+    return Menus(gateway_restaurant_api)
+
+
 @pytest.fixture
 def courier_locations(redis_client: Redis, settings: Settings) -> Iterator[CourierLocations]:
     locations = CourierLocations(redis_client, settings.COURIER_LOCATIONS_KEY)

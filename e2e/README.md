@@ -95,6 +95,8 @@ e2e/
 | `gateway_client` | Gateway'e istek atan `ApiClient`; sadece isteyen case'ler gateway'in ayakta olmasını gerektirir |
 | `gateway_user_api` | `UserServiceApi` wrapper'ı, ama istekleri gateway üzerinden atar |
 | `gateway_courier_api` | `CourierServiceApi` wrapper'ı; istekleri gateway üzerinden courier-service'e atar |
+| `gateway_restaurant_api`, `gateway_order_api` | `RestaurantServiceApi` / `OrderServiceApi` wrapper'ları, istekleri gateway üzerinden atar |
+| `gateway_actors`, `gateway_menus` | `actors` / `menus` ile aynı, ama tüm API adımlarını gateway üzerinden yapar |
 | `actors` | Senaryonun ihtiyaç duyduğu kullanıcıyı tek satırda hazırlar |
 
 `actors` mümkün olan her adımı gerçek API üzerinden yapar; endpoint'i olmayan tek adım olan admin oluşturma DB üzerinden yapılır:
@@ -236,7 +238,7 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
-| S12 | Gateway üzerinden tam teslimat yolu: müşteri, merchant ve kurye onboarding; müşteri sipariş verir, merchant siparişi ready-for-pickup'a getirir, kurye konum gönderir. Tüm platform için smoke test | | Planlandı |
+| S12 | Gateway üzerinden tam teslimat yolu: müşteri, merchant ve kurye onboarding; müşteri sipariş verir, merchant siparişi ready-for-pickup'a getirir, kurye konum gönderir. Tüm istekler (onboarding dahil) gateway'den geçer. Tüm platform için smoke test | `tests/stories/test_s12_full_delivery_path_through_gateway.py` | Yazıldı |
 
 #### Olaylar ve Dispatch
 
