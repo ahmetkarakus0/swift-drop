@@ -34,9 +34,10 @@ main.py         app entry point, health check and catch-all proxy route
    | `USER_SERVICE_URL` | `http://127.0.0.1:8000` | User service base URL |
    | `RESTAURANT_SERVICE_URL` | `http://127.0.0.1:8001` | Restaurant service base URL |
    | `ORDER_SERVICE_URL` | `http://127.0.0.1:8002` | Order service base URL |
+   | `COURIER_SERVICE_URL` | `http://127.0.0.1:8003` | Courier service base URL |
    | `UPSTREAM_TIMEOUT_SECONDS` | `10` | Timeout for requests to the services |
 
-3. Start the user, restaurant and order services (see their READMEs), then start the gateway:
+3. Start the user, restaurant, order and courier services (see their READMEs), then start the gateway:
 
    ```bash
    python main.py
@@ -46,12 +47,13 @@ The gateway runs at http://127.0.0.1:8080.
 
 ## Routing
 
-Requests are routed by the first path segment after `/api`. The path and query string are forwarded as-is.
+Requests are routed by the path prefix after `/api`; when several prefixes match, the longest one wins. The path and query string are forwarded as-is.
 
 | Path prefix | Service |
 |---|---|
 | `/api/auth/*` | User service |
 | `/api/users/*` | User service |
+| `/api/couriers/location` | Courier service |
 | `/api/couriers/*` | User service |
 | `/api/merchants/*` | User service |
 | `/api/restaurants/*` | Restaurant service |

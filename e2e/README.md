@@ -14,6 +14,7 @@ Servislerin çalışan hâllerine gerçek HTTP istekleri atan ve sonuçları do�
 
    - user-service: http://127.0.0.1:8000
    - restaurant-service: http://127.0.0.1:8001
+   - courier-service: http://127.0.0.1:8003 (sadece kurye konum case'leri için gerekli; gateway üzerinden erişilir)
    - gateway: http://127.0.0.1:8080 (sadece `tests/gateway` case'leri için gerekli)
 
    Servisler veya veritabanı erişilemezse test oturumu açıklayıcı bir hata mesajıyla hemen durur.
@@ -35,7 +36,8 @@ copy .env.example .env          # Linux/macOS: cp .env.example .env
 | `USER_SERVICE_URL`, `RESTAURANT_SERVICE_URL` | Servislerin adresleri |
 | `GATEWAY_URL` | Gateway adresi |
 | `USER_DB_URL`, `RESTAURANT_DB_URL` | Servis veritabanlarına doğrudan bağlantı |
-| `REDIS_URL` | user-service'in kullandığı Redis (token iptali kontrolleri için) |
+| `REDIS_URL` | user-service ve courier-service'in kullandığı Redis (token iptali ve kurye konumu kontrolleri için) |
+| `COURIER_LOCATIONS_KEY` | courier-service'in kurye konumlarını tuttuğu Redis GEO anahtarı (varsayılan `courier-locations`) |
 | `TEST_DATA_PREFIX` | Testlerin oluşturduğu tüm kayıtların başına eklenen prefix (varsayılan `e2e_test`); temizlik buna göre yapılır |
 | `TEST_EMAIL_DOMAIN` | Test kullanıcılarının e-posta domain'i |
 | `DEFAULT_PASSWORD` | Test kullanıcılarının şifresi |
@@ -63,7 +65,7 @@ e2e/
     config.py            .env okuyan ayarlar
     db.py                ham SQL ile DB erişimi (fetch_one, fetch_all, scalar, execute)
     http_client.py       httpx tabanlı client, istek/yanıt loglama, expect_status
-    services.py          endpoint wrapper'ları (UserServiceApi, RestaurantServiceApi)
+    services.py          endpoint wrapper'ları (UserServiceApi, CourierServiceApi, RestaurantServiceApi)
     data.py              geçerli request payload'ları (override ile varyasyon üretilir)
     actors.py            hazır durumda kullanıcılar (doğrulanmış müşteri, onaylı merchant, admin...)
     cleanup.py           test verisinin temizlenmesi
@@ -84,6 +86,7 @@ e2e/
 | `user_api`, `restaurant_api` | Servis endpoint'lerine istek atan wrapper'lar; her metot ham `httpx.Response` döner |
 | `gateway_client` | Gateway'e istek atan `ApiClient`; sadece isteyen case'ler gateway'in ayakta olmasını gerektirir |
 | `gateway_user_api` | `UserServiceApi` wrapper'ı, ama istekleri gateway üzerinden atar |
+| `gateway_courier_api` | `CourierServiceApi` wrapper'ı; istekleri gateway üzerinden courier-service'e atar |
 | `actors` | Senaryonun ihtiyaç duyduğu kullanıcıyı tek satırda hazırlar |
 
 `actors` mümkün olan her adımı gerçek API üzerinden yapar; endpoint'i olmayan tek adım olan admin oluşturma DB üzerinden yapılır:
@@ -183,3 +186,4 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 | # | Case | Test dosyası | Durum |
 |---|---|---|---|
 | G1 | Müşteri gateway üzerinden kayıt olur, e-postasını doğrular, giriş yapar ve `/api/auth/me` ile kendi bilgilerini alır | `tests/gateway/test_customer_auth_through_gateway.py` | Yazıldı |
+| G2 | Kurye gateway üzerinden kayıt olur, e-postasını doğrular, admin kuryeyi onaylar; kurye `PUT /api/couriers/location` ile konumunu gönderir ve konum Redis'teki `courier-locations` GEO anahtarına yazılır | `tests/gateway/test_courier_location_update_through_gateway.py` | Yazıldı |

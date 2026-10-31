@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     USER_SERVICE_URL: str = "http://127.0.0.1:8000"
     RESTAURANT_SERVICE_URL: str = "http://127.0.0.1:8001"
     ORDER_SERVICE_URL: str = "http://127.0.0.1:8002"
+    COURIER_SERVICE_URL: str = "http://127.0.0.1:8003"
     UPSTREAM_TIMEOUT_SECONDS: float = 10.0
 
 

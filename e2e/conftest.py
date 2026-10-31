@@ -10,7 +10,7 @@ from framework.cleanup import cleanup_test_data
 from framework.config import Settings, get_settings
 from framework.db import Database
 from framework.http_client import ApiClient
-from framework.services import RestaurantServiceApi, UserServiceApi
+from framework.services import CourierServiceApi, RestaurantServiceApi, UserServiceApi
 
 
 @pytest.fixture(scope="session")
@@ -87,6 +87,11 @@ def gateway_client(settings: Settings) -> Iterator[ApiClient]:
 @pytest.fixture(scope="session")
 def gateway_user_api(gateway_client: ApiClient) -> UserServiceApi:
     return UserServiceApi(gateway_client)
+
+
+@pytest.fixture(scope="session")
+def gateway_courier_api(gateway_client: ApiClient) -> CourierServiceApi:
+    return CourierServiceApi(gateway_client)
 
 
 @pytest.fixture(scope="session")

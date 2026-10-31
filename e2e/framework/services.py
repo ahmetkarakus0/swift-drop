@@ -53,6 +53,16 @@ class UserServiceApi:
         )
 
 
+class CourierServiceApi:
+    def __init__(self, client: ApiClient):
+        self.client = client
+
+    def update_location(self, token: str, latitude: float, longitude: float) -> httpx.Response:
+        return self.client.put(
+            "/api/couriers/location", token=token, json={"latitude": latitude, "longitude": longitude}
+        )
+
+
 class RestaurantServiceApi:
     def __init__(self, client: ApiClient):
         self.client = client

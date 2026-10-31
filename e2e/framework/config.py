@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     USER_DB_URL: str
     RESTAURANT_DB_URL: str
     REDIS_URL: str
+    COURIER_LOCATIONS_KEY: str = "courier-locations"
 
     TEST_DATA_PREFIX: str = "e2e_test"
     TEST_EMAIL_DOMAIN: str = "e2e.swiftdrop.test"
