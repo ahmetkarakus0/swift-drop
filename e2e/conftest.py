@@ -8,6 +8,7 @@ from sqlalchemy.exc import OperationalError
 from framework.actors import Actors
 from framework.cleanup import cleanup_test_data
 from framework.config import Settings, get_settings
+from framework.courier_locations import CourierLocations
 from framework.db import Database
 from framework.http_client import ApiClient
 from framework.services import CourierServiceApi, OrderServiceApi, RestaurantServiceApi, UserServiceApi
@@ -92,6 +93,14 @@ def order_api(settings: Settings) -> Iterator[OrderServiceApi]:
 
 
 @pytest.fixture(scope="session")
+def courier_api(settings: Settings) -> Iterator[CourierServiceApi]:
+    """Only requested by courier cases, so the rest of the suite runs without courier-service."""
+    client = _service_client(settings.COURIER_SERVICE_URL, "courier-service", settings.HTTP_TIMEOUT_SECONDS)
+    yield CourierServiceApi(client)
+    client.close()
+
+
+@pytest.fixture(scope="session")
 def gateway_client(settings: Settings) -> Iterator[ApiClient]:
     """Only requested by gateway cases, so the rest of the suite runs without the gateway."""
     client = _service_client(settings.GATEWAY_URL, "gateway", settings.HTTP_TIMEOUT_SECONDS, "/health")
@@ -107,6 +116,14 @@ def gateway_user_api(gateway_client: ApiClient) -> UserServiceApi:
 @pytest.fixture(scope="session")
 def gateway_courier_api(gateway_client: ApiClient) -> CourierServiceApi:
     return CourierServiceApi(gateway_client)
+
+
+@pytest.fixture
+def courier_locations(redis_client: Redis, settings: Settings) -> Iterator[CourierLocations]:
+    locations = CourierLocations(redis_client, settings.COURIER_LOCATIONS_KEY)
+    yield locations
+    if not settings.KEEP_TEST_DATA:
+        locations.cleanup()
 
 
 @pytest.fixture(scope="session")

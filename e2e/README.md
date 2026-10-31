@@ -15,7 +15,7 @@ Servislerin çalışan hâllerine gerçek HTTP istekleri atan ve sonuçları do�
    - user-service: http://127.0.0.1:8000
    - restaurant-service: http://127.0.0.1:8001
    - order-service: http://127.0.0.1:8002 (sadece sepet/sipariş case'leri için gerekli)
-   - courier-service: http://127.0.0.1:8003 (sadece kurye konum case'leri için gerekli; gateway üzerinden erişilir)
+   - courier-service: http://127.0.0.1:8003 (sadece kurye konum case'leri için gerekli)
    - gateway: http://127.0.0.1:8080 (sadece `tests/gateway` case'leri için gerekli)
 
    Servisler veya veritabanı erişilemezse test oturumu açıklayıcı bir hata mesajıyla hemen durur.
@@ -34,7 +34,7 @@ copy .env.example .env          # Linux/macOS: cp .env.example .env
 
 | Değişken | Açıklama |
 |---|---|
-| `USER_SERVICE_URL`, `RESTAURANT_SERVICE_URL`, `ORDER_SERVICE_URL` | Servislerin adresleri |
+| `USER_SERVICE_URL`, `RESTAURANT_SERVICE_URL`, `ORDER_SERVICE_URL`, `COURIER_SERVICE_URL` | Servislerin adresleri |
 | `GATEWAY_URL` | Gateway adresi |
 | `USER_DB_URL`, `RESTAURANT_DB_URL`, `ORDER_DB_URL` | Servis veritabanlarına doğrudan bağlantı |
 | `REDIS_URL` | user-service ve courier-service'in kullandığı Redis (token iptali ve kurye konumu kontrolleri için) |
@@ -70,6 +70,7 @@ e2e/
     data.py              geçerli request payload'ları (override ile varyasyon üretilir)
     actors.py            hazır durumda kullanıcılar (doğrulanmış müşteri, onaylı merchant, admin...)
     cleanup.py           test verisinin temizlenmesi
+    courier_locations.py Redis'teki kurye konumlarını okuma ve temizleme
   tests/
     user_service/        sadece user-service'i ilgilendiren case'ler
     restaurant_service/  restaurant-service case'leri
@@ -87,6 +88,8 @@ e2e/
 | `redis_client` | user-service Redis bağlantısı |
 | `user_api`, `restaurant_api` | Servis endpoint'lerine istek atan wrapper'lar; her metot ham `httpx.Response` döner. `restaurant_api` merchant'ın sipariş işlemlerini (listeleme, accept, prepare, ready-for-pickup, cancel) de içerir |
 | `order_api` | order-service'e (sepet ve sipariş) istek atan wrapper; sadece isteyen case'ler order-service'in ayakta olmasını gerektirir |
+| `courier_api` | courier-service'e doğrudan istek atan wrapper; sadece isteyen case'ler courier-service'in ayakta olmasını gerektirir |
+| `courier_locations` | Redis'teki kurye konumlarını okur (`position(courier_id)` → `(lat, lon)` veya `None`); sorulan kuryelerin kayıtlarını case sonunda siler |
 | `gateway_client` | Gateway'e istek atan `ApiClient`; sadece isteyen case'ler gateway'in ayakta olmasını gerektirir |
 | `gateway_user_api` | `UserServiceApi` wrapper'ı, ama istekleri gateway üzerinden atar |
 | `gateway_courier_api` | `CourierServiceApi` wrapper'ı; istekleri gateway üzerinden courier-service'e atar |
@@ -204,7 +207,7 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
-| S1 | Kurye onboarding: kurye kayıt olur ve giriş yapar; konum göndermeye çalışır ve önce `User is not verified`, e-postasını doğruladıktan sonra `Courier is not verified` ile engellenir (Redis'e yazılmaz). Admin kuryeyi onaylar; aynı token ile konum gönderilir ve Redis'e yazılır | | Planlandı |
+| S1 | Kurye onboarding: kurye kayıt olur ve giriş yapar; konum göndermeye çalışır ve önce `User is not verified`, e-postasını doğruladıktan sonra `Courier is not verified` ile engellenir (Redis'e yazılmaz). Admin kuryeyi onaylar; aynı token ile konum gönderilir ve Redis'e yazılır | `tests/stories/test_s01_courier_onboarding.py` | Yazıldı |
 | S2 | Müşteri onboarding: müşteri kayıt olup giriş yapar; e-postasını doğrulamadan sepete ürün eklemeye çalışır ve `User is not verified` ile engellenir. E-postasını doğruladıktan sonra aynı token ile sepete ekler ve sipariş verir | | Planlandı |
 | S3 | Admin başvuruları inceler: birkaç kurye ve merchant kayıt olur; admin kullanıcıları rol bazında listeler, bazılarını onaylar, bir merchant'ı `rejected` yapar. Sadece onaylananlar courier-service / restaurant-service'i kullanabilir | | Planlandı |
 
