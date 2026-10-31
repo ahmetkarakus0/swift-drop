@@ -94,6 +94,12 @@ class Actors:
             self.login(actor)
         return actor
 
+    def set_active(self, actor: Actor, is_active: bool) -> None:
+        """There is no endpoint for (de)activating users, so this goes through user_db."""
+        self.user_db.execute(
+            "UPDATE users SET is_active = :is_active WHERE id = :id", is_active=is_active, id=actor.user_id
+        )
+
     def verification_token(self, actor: Actor) -> Optional[str]:
         return self.user_db.scalar(
             "SELECT user_verification_link FROM users WHERE id = :id", id=actor.user_id
