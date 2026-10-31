@@ -41,6 +41,14 @@ class UserServiceApi:
     def me(self, access_token: str) -> httpx.Response:
         return self.client.get("/api/auth/me", token=access_token)
 
+    def list_users(
+        self, admin_token: str, role: str | None = None, limit: int = 50, offset: int = 0
+    ) -> httpx.Response:
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        if role is not None:
+            params["role"] = role
+        return self.client.get("/api/users", token=admin_token, params=params)
+
     def verify_courier(self, courier_id: Id, admin_token: str) -> httpx.Response:
         return self.client.post(f"/api/couriers/{courier_id}/verify", token=admin_token)
 

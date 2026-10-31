@@ -69,6 +69,7 @@ e2e/
     services.py          endpoint wrapper'ları (UserServiceApi, CourierServiceApi, RestaurantServiceApi, OrderServiceApi)
     data.py              geçerli request payload'ları (override ile varyasyon üretilir)
     actors.py            hazır durumda kullanıcılar (doğrulanmış müşteri, onaylı merchant, admin...)
+    menus.py             hazır restoran menüleri (restoran + kategori + ürünler)
     cleanup.py           test verisinin temizlenmesi
     courier_locations.py Redis'teki kurye konumlarını okuma ve temizleme
   tests/
@@ -210,7 +211,7 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 |---|---|---|---|
 | S1 | Kurye onboarding: kurye kayıt olur ve giriş yapar; konum göndermeye çalışır ve önce `User is not verified`, e-postasını doğruladıktan sonra `Courier is not verified` ile engellenir (Redis'e yazılmaz). Admin kuryeyi onaylar; aynı token ile konum gönderilir ve Redis'e yazılır | `tests/stories/test_s01_courier_onboarding.py` | Yazıldı |
 | S2 | Müşteri onboarding: müşteri kayıt olup giriş yapar; e-postasını doğrulamadan sepete ürün eklemeye çalışır ve `User is not verified` ile engellenir. E-postasını doğruladıktan sonra aynı token ile sepete ekler ve sipariş verir | `tests/stories/test_s02_customer_onboarding.py` | Yazıldı |
-| S3 | Admin başvuruları inceler: birkaç kurye ve merchant kayıt olur; admin kullanıcıları rol bazında listeler, bazılarını onaylar, bir merchant'ı `rejected` yapar. Sadece onaylananlar courier-service / restaurant-service'i kullanabilir | | Planlandı |
+| S3 | Admin başvuruları inceler: birkaç kurye ve merchant kayıt olur; admin kullanıcıları rol bazında listeler, bazılarını onaylar, bir merchant'ı `rejected` yapar. Sadece onaylananlar courier-service / restaurant-service'i kullanabilir (merchant `status` uygunluğu etkilemez; reddedilen merchant onaylanmadığı için engellenir) | `tests/stories/test_s03_admin_reviews_applicants.py` | Yazıldı |
 
 #### Merchant ve Menü
 
