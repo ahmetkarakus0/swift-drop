@@ -4,6 +4,9 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 
 from core.database import engine
+from core.redis import redis_client
+from core.user_service import user_service_client
+from routes.courier_route import router as courier_router
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -12,6 +15,8 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
+    user_service_client.close()
+    redis_client.close()
     engine.dispose()
 
 
@@ -22,6 +27,7 @@ app = FastAPI(
 )
 
 router = APIRouter(prefix="/api")
+router.include_router(courier_router)
 
 app.include_router(router)
 
