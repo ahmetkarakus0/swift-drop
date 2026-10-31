@@ -10,7 +10,7 @@ from framework.cleanup import cleanup_test_data
 from framework.config import Settings, get_settings
 from framework.db import Database
 from framework.http_client import ApiClient
-from framework.services import CourierServiceApi, RestaurantServiceApi, UserServiceApi
+from framework.services import CourierServiceApi, OrderServiceApi, RestaurantServiceApi, UserServiceApi
 
 
 @pytest.fixture(scope="session")
@@ -37,6 +37,13 @@ def user_db(settings: Settings) -> Iterator[Database]:
 @pytest.fixture(scope="session")
 def restaurant_db(settings: Settings) -> Iterator[Database]:
     db = _connect_db(settings.RESTAURANT_DB_URL, "restaurant_db")
+    yield db
+    db.dispose()
+
+
+@pytest.fixture(scope="session")
+def order_db(settings: Settings) -> Iterator[Database]:
+    db = _connect_db(settings.ORDER_DB_URL, "order_db")
     yield db
     db.dispose()
 
@@ -77,6 +84,14 @@ def restaurant_api(settings: Settings) -> Iterator[RestaurantServiceApi]:
 
 
 @pytest.fixture(scope="session")
+def order_api(settings: Settings) -> Iterator[OrderServiceApi]:
+    """Only requested by order cases, so the rest of the suite runs without order-service."""
+    client = _service_client(settings.ORDER_SERVICE_URL, "order-service", settings.HTTP_TIMEOUT_SECONDS)
+    yield OrderServiceApi(client)
+    client.close()
+
+
+@pytest.fixture(scope="session")
 def gateway_client(settings: Settings) -> Iterator[ApiClient]:
     """Only requested by gateway cases, so the rest of the suite runs without the gateway."""
     client = _service_client(settings.GATEWAY_URL, "gateway", settings.HTTP_TIMEOUT_SECONDS, "/health")
@@ -100,11 +115,13 @@ def actors(user_api: UserServiceApi, user_db: Database, settings: Settings) -> A
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _clean_test_data(settings: Settings, user_db: Database, restaurant_db: Database) -> Iterator[None]:
+def _clean_test_data(
+    settings: Settings, user_db: Database, restaurant_db: Database, order_db: Database
+) -> Iterator[None]:
     """Removes leftovers from previous runs before the session and this run's data after it."""
     if settings.KEEP_TEST_DATA:
         yield
         return
-    cleanup_test_data(user_db, restaurant_db, settings.TEST_DATA_PREFIX)
+    cleanup_test_data(user_db, restaurant_db, order_db, settings.TEST_DATA_PREFIX)
     yield
-    cleanup_test_data(user_db, restaurant_db, settings.TEST_DATA_PREFIX)
+    cleanup_test_data(user_db, restaurant_db, order_db, settings.TEST_DATA_PREFIX)

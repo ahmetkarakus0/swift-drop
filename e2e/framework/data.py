@@ -95,6 +95,10 @@ def category_payload(**overrides: Any) -> dict[str, Any]:
     return {"name": unique_name("Category"), "is_active": True, **overrides}
 
 
+def order_payload(basket_id: str, **overrides: Any) -> dict[str, Any]:
+    return {"basket_id": basket_id, "delivery_address": "E2E Street No: 3, Moda, Kadikoy, Istanbul", **overrides}
+
+
 def item_payload(**overrides: Any) -> dict[str, Any]:
     return {
         "name": unique_name("Item"),

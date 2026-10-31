@@ -111,3 +111,39 @@ class RestaurantServiceApi:
 
     def delete_item(self, token: str, item_id: Id) -> httpx.Response:
         return self.client.delete(f"/api/items/{item_id}", token=token)
+
+    def list_orders(self, token: str, restaurant_id: Id, status: str | None = None) -> httpx.Response:
+        params = {"status": status} if status is not None else None
+        return self.client.get(f"/api/restaurants/{restaurant_id}/orders", token=token, params=params)
+
+    def accept_order(self, token: str, restaurant_id: Id, order_id: Id) -> httpx.Response:
+        return self._order_action(token, restaurant_id, order_id, "accept")
+
+    def prepare_order(self, token: str, restaurant_id: Id, order_id: Id) -> httpx.Response:
+        return self._order_action(token, restaurant_id, order_id, "prepare")
+
+    def mark_order_ready_for_pickup(self, token: str, restaurant_id: Id, order_id: Id) -> httpx.Response:
+        return self._order_action(token, restaurant_id, order_id, "ready-for-pickup")
+
+    def cancel_order(self, token: str, restaurant_id: Id, order_id: Id) -> httpx.Response:
+        return self._order_action(token, restaurant_id, order_id, "cancel")
+
+    def _order_action(self, token: str, restaurant_id: Id, order_id: Id, action: str) -> httpx.Response:
+        return self.client.put(f"/api/restaurants/{restaurant_id}/orders/{order_id}/{action}", token=token)
+
+
+class OrderServiceApi:
+    def __init__(self, client: ApiClient):
+        self.client = client
+
+    def add_basket_item(self, token: str, item_id: Id, quantity: int = 1) -> httpx.Response:
+        return self.client.post("/api/baskets/items", token=token, json={"item_id": item_id, "quantity": quantity})
+
+    def list_baskets(self, token: str) -> httpx.Response:
+        return self.client.get("/api/baskets", token=token)
+
+    def get_basket(self, token: str, basket_id: Id) -> httpx.Response:
+        return self.client.get(f"/api/baskets/{basket_id}", token=token)
+
+    def place_order(self, token: str, payload: dict[str, Any]) -> httpx.Response:
+        return self.client.post("/api/orders", token=token, json=payload)

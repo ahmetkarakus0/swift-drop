@@ -15,11 +15,13 @@ class Settings(BaseSettings):
 
     USER_SERVICE_URL: str = "http://127.0.0.1:8000"
     RESTAURANT_SERVICE_URL: str = "http://127.0.0.1:8001"
+    ORDER_SERVICE_URL: str = "http://127.0.0.1:8002"
     GATEWAY_URL: str = "http://127.0.0.1:8080"
     HTTP_TIMEOUT_SECONDS: float = 10.0
 
     USER_DB_URL: str
     RESTAURANT_DB_URL: str
+    ORDER_DB_URL: str
     REDIS_URL: str
     COURIER_LOCATIONS_KEY: str = "courier-locations"
 

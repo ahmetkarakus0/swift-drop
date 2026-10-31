@@ -14,6 +14,7 @@ Servislerin çalışan hâllerine gerçek HTTP istekleri atan ve sonuçları do�
 
    - user-service: http://127.0.0.1:8000
    - restaurant-service: http://127.0.0.1:8001
+   - order-service: http://127.0.0.1:8002 (sadece sepet/sipariş case'leri için gerekli)
    - courier-service: http://127.0.0.1:8003 (sadece kurye konum case'leri için gerekli; gateway üzerinden erişilir)
    - gateway: http://127.0.0.1:8080 (sadece `tests/gateway` case'leri için gerekli)
 
@@ -33,9 +34,9 @@ copy .env.example .env          # Linux/macOS: cp .env.example .env
 
 | Değişken | Açıklama |
 |---|---|
-| `USER_SERVICE_URL`, `RESTAURANT_SERVICE_URL` | Servislerin adresleri |
+| `USER_SERVICE_URL`, `RESTAURANT_SERVICE_URL`, `ORDER_SERVICE_URL` | Servislerin adresleri |
 | `GATEWAY_URL` | Gateway adresi |
-| `USER_DB_URL`, `RESTAURANT_DB_URL` | Servis veritabanlarına doğrudan bağlantı |
+| `USER_DB_URL`, `RESTAURANT_DB_URL`, `ORDER_DB_URL` | Servis veritabanlarına doğrudan bağlantı |
 | `REDIS_URL` | user-service ve courier-service'in kullandığı Redis (token iptali ve kurye konumu kontrolleri için) |
 | `COURIER_LOCATIONS_KEY` | courier-service'in kurye konumlarını tuttuğu Redis GEO anahtarı (varsayılan `courier-locations`) |
 | `TEST_DATA_PREFIX` | Testlerin oluşturduğu tüm kayıtların başına eklenen prefix (varsayılan `e2e_test`); temizlik buna göre yapılır |
@@ -65,7 +66,7 @@ e2e/
     config.py            .env okuyan ayarlar
     db.py                ham SQL ile DB erişimi (fetch_one, fetch_all, scalar, execute)
     http_client.py       httpx tabanlı client, istek/yanıt loglama, expect_status
-    services.py          endpoint wrapper'ları (UserServiceApi, CourierServiceApi, RestaurantServiceApi)
+    services.py          endpoint wrapper'ları (UserServiceApi, CourierServiceApi, RestaurantServiceApi, OrderServiceApi)
     data.py              geçerli request payload'ları (override ile varyasyon üretilir)
     actors.py            hazır durumda kullanıcılar (doğrulanmış müşteri, onaylı merchant, admin...)
     cleanup.py           test verisinin temizlenmesi
@@ -81,9 +82,10 @@ e2e/
 | Fixture | Ne verir |
 |---|---|
 | `settings` | `.env` ayarları |
-| `user_db`, `restaurant_db` | `Database` nesnesi; doğrudan SQL çalıştırmak için |
+| `user_db`, `restaurant_db`, `order_db` | `Database` nesnesi; doğrudan SQL çalıştırmak için |
 | `redis_client` | user-service Redis bağlantısı |
-| `user_api`, `restaurant_api` | Servis endpoint'lerine istek atan wrapper'lar; her metot ham `httpx.Response` döner |
+| `user_api`, `restaurant_api` | Servis endpoint'lerine istek atan wrapper'lar; her metot ham `httpx.Response` döner. `restaurant_api` merchant'ın sipariş işlemlerini (listeleme, accept, prepare, ready-for-pickup, cancel) de içerir |
+| `order_api` | order-service'e (sepet ve sipariş) istek atan wrapper; sadece isteyen case'ler order-service'in ayakta olmasını gerektirir |
 | `gateway_client` | Gateway'e istek atan `ApiClient`; sadece isteyen case'ler gateway'in ayakta olmasını gerektirir |
 | `gateway_user_api` | `UserServiceApi` wrapper'ı, ama istekleri gateway üzerinden atar |
 | `gateway_courier_api` | `CourierServiceApi` wrapper'ı; istekleri gateway üzerinden courier-service'e atar |
@@ -136,8 +138,11 @@ Testlerin oluşturduğu her kayıt `TEST_DATA_PREFIX` (varsayılan `e2e_test`) i
 |---|---|---|
 | `user_db` | `users.email` | `e2e_test.customer.3f9a1c2b7d4e@e2e.swiftdrop.test` |
 | `restaurant_db` | `restaurants.name`, `categories.name`, `items.name` | `e2e_test Restaurant 3f9a1c2b7d4e` |
+| `order_db` | prefix'li alan yok; `baskets.user_id` / `orders.user_id` test kullanıcılarının id'leri | — |
 
 Oturum başında (önceki koşulardan kalanlar için) ve sonunda her veritabanına ayrı ayrı bağlanılır ve prefix ile başlayan tüm kayıtlar silinir (`framework/cleanup.py`):
+
+- `order_db`: önce `user_db`'den prefix'li kullanıcıların id'leri okunur, bu kullanıcılara ait sepetler ve siparişler silinir (kalemleri cascade ile gider). Kullanıcılar silindikten sonra bu eşleşme kurulamayacağı için ilk bu adım çalışır.
 
 - `user_db`: prefix'li e-postaya sahip kullanıcılar silinir; profil (customer/courier/merchant) ve adresler cascade ile gider.
 - `restaurant_db`: prefix'li isme sahip restoranlar (kategori ve ürünleriyle birlikte cascade), ardından başka bir üst kayda bağlı kalmış prefix'li kategori ve ürünler silinir.
@@ -180,6 +185,7 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 | # | Case | Test dosyası | Durum |
 |---|---|---|---|
 | C1 | Merchant doğrulanmadan restoran oluşturamaz (önce `User is not verified`, e-posta doğrulandıktan sonra `Merchant is not verified`); admin merchant'ı doğruladıktan sonra aynı token ile restoran oluşturur | `tests/cross_service/test_merchant_verification_gates_restaurant_creation.py` | Yazıldı |
+| C2 | Doğrulanmış müşteri ve onaylı merchant; merchant açık restoran, kategori ve ürün ekler; müşteri ürünü sepete ekleyip sipariş verir (sepet silinir). Merchant ilk siparişi sırayla accept → prepare → ready-for-pickup yapar (sonrasında cancel 409); ikinci siparişi accept → prepare → cancel yapar (sonrasında ready-for-pickup 409). Her adım `order_db` üzerinden de doğrulanır | `tests/cross_service/test_customer_order_lifecycle.py` | Yazıldı |
 
 ### Gateway
 
