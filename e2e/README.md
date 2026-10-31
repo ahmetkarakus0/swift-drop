@@ -1,6 +1,6 @@
 # Swift Drop E2E Testleri
 
-Servislerin çalışan hâllerine gerçek HTTP istekleri atan ve sonuçları doğrudan veritabanından kontrol eden uçtan uca (e2e) test ortamı. Testler tek tek fonksiyonları değil, kullanıcı senaryolarını (case) baştan sona doğrular.
+Servislerin çalışan hâllerine gerçek HTTP istekleri atan ve sonuçları doğrudan veritabanından kontrol eden uçtan uca (e2e) test ortamı. Testler tek tek endpoint'leri değil, tam kullanıcı hikâyelerini (story) baştan sona doğrular.
 
 ## Ön Koşullar
 
@@ -14,9 +14,9 @@ Servislerin çalışan hâllerine gerçek HTTP istekleri atan ve sonuçları do�
 
    - user-service: http://127.0.0.1:8000
    - restaurant-service: http://127.0.0.1:8001
-   - order-service: http://127.0.0.1:8002 (sadece sepet/sipariş case'leri için gerekli)
-   - courier-service: http://127.0.0.1:8003 (sadece kurye konum case'leri için gerekli)
-   - gateway: http://127.0.0.1:8080 (sadece `tests/gateway` case'leri için gerekli)
+   - order-service: http://127.0.0.1:8002 (sadece sepet/sipariş hikâyeleri için gerekli)
+   - courier-service: http://127.0.0.1:8003 (sadece kurye konum hikâyeleri için gerekli)
+   - gateway: http://127.0.0.1:8080 (sadece `gateway` marker'lı hikâyeler için gerekli)
 
    Servisler veya veritabanı erişilemezse test oturumu açıklayıcı bir hata mesajıyla hemen durur.
 
@@ -48,14 +48,15 @@ copy .env.example .env          # Linux/macOS: cp .env.example .env
 ## Çalıştırma
 
 ```bash
-pytest                                  # tüm case'ler
-pytest tests/user_service               # tek klasör
-pytest -m smoke                         # sadece smoke case'leri
+pytest                                  # tüm hikâyeler
+pytest tests/stories/test_s04_merchant_opens_for_business.py   # tek hikâye
+pytest -m smoke                         # sadece smoke hikâyeleri
+pytest -m "not gateway"                 # gateway'i gerektirmeyenler
 pytest -k merchant                      # isminde "merchant" geçenler
 pytest --log-cli-level=INFO             # tüm HTTP istek/yanıtlarını canlı göster
 ```
 
-Tanımlı marker'lar: `user_service`, `restaurant_service`, `cross_service`, `gateway`, `story`, `smoke` (bkz. `pytest.ini`).
+Tanımlı marker'lar: `story` (her test), `gateway` (tüm istekleri gateway üzerinden atar), `smoke` (bkz. `pytest.ini`).
 
 ## Klasör Yapısı
 
@@ -75,11 +76,7 @@ e2e/
     courier_locations.py Redis'teki kurye konumlarını okuma ve temizleme
     order_events.py      Kafka'daki sipariş olaylarını okuma
   tests/
-    user_service/        sadece user-service'i ilgilendiren case'ler
-    restaurant_service/  restaurant-service case'leri
-    cross_service/       birden fazla servisi kapsayan case'ler
-    gateway/             istekleri gateway üzerinden atan case'ler
-    stories/             birden fazla aktör ve servisi baştan sona kapsayan kullanıcı hikâyeleri
+    stories/             kullanıcı hikâyeleri; her hikâye bir dosya (test_sNN_<hikaye_adi>.py)
 ```
 
 ## Fixture'lar
@@ -113,11 +110,11 @@ e2e/
 
 Dönen `Actor` nesnesinde `user_id`, `email`, `password`, `role`, `profile_id` (customer/courier/merchant id), `access_token`, `refresh_token` ve kayıt yanıtı (`registration`) bulunur.
 
-## Case Yazma Kuralları
+## Hikâye Yazma Kuralları
 
 - E2E testleri tam kullanıcı hikâyelerini (story) test eder. Tek bir endpoint'in doğrulama kuralları (aynı e-postayla tekrar kayıt → 409, geçersiz payload → 422, bozuk token → 401 gibi) unit testlerin işidir, buraya yazılmaz. Hata yanıtları sadece hikâyenin doğal bir adımıysa kontrol edilir (ör. onaylanmamış kurye önce engellenir, onaydan sonra aynı token kabul edilir).
-- Her case kendi dosyasında: `tests/<alan>/test_<case_adi>.py`. Dosya bir senaryoyu anlatır, içindeki adımlar sırayla yazılır.
-- Case dosyası eklendiğinde aşağıdaki case listesindeki satır güncellenir (dosya adı ve durum).
+- Her hikâye kendi dosyasında: `tests/stories/test_sNN_<hikaye_adi>.py`, `@pytest.mark.story` ile işaretli. Dosya bir hikâyeyi anlatır, içindeki adımlar sırayla yazılır. Hikâyeye uymayan tekil kontroller e2e'ye eklenmez.
+- Hikâye dosyası eklendiğinde aşağıdaki hikâye listesindeki satır güncellenir (dosya adı ve durum).
 - Kullanıcı e-postaları her zaman `framework.data.unique_email()`, restoran/kategori/ürün isimleri `framework.data.unique_name()` ile üretilir. İkisi de `TEST_DATA_PREFIX` ile başlar; temizlik bu prefix'e göre yapılır ve testler birbirini etkilemez. Payload override'larında e-posta veya isim verilecekse yine bu fonksiyonlar kullanılmalı, yoksa kayıt temizlenmez.
 - Yanıt kontrolünde `expect_status(response, 201)` kullanılırsa hata mesajında yanıt gövdesi de görünür.
 - API'nin döndüğü değerler, gerektiğinde `user_db` / `restaurant_db` üzerinden DB'deki kayıtla da doğrulanır.
@@ -131,16 +128,20 @@ from framework import data
 from framework.http_client import expect_status
 
 
-@pytest.mark.restaurant_service
-def test_merchant_builds_menu(actors, restaurant_api, restaurant_db):
+@pytest.mark.story
+def test_customer_orders_from_a_new_restaurant(actors, menus, order_api, restaurant_api, order_db):
     merchant = actors.merchant()
+    menu = menus.create(merchant)
+    customer = actors.customer()
 
-    restaurant = expect_status(
-        restaurant_api.create_restaurant(merchant.access_token, data.restaurant_payload()), 201
+    basket = expect_status(order_api.add_basket_item(customer.access_token, menu.item["id"]), 201).json()
+    order = expect_status(
+        order_api.place_order(customer.access_token, data.order_payload(basket["id"])), 201
     ).json()
 
-    row = restaurant_db.fetch_one("SELECT * FROM restaurants WHERE id = :id", id=restaurant["id"])
-    assert str(row["merchant_id"]) == merchant.profile_id
+    orders = expect_status(restaurant_api.list_orders(merchant.access_token, menu.restaurant_id), 200).json()
+    assert [o["id"] for o in orders] == [order["id"]]
+    assert order_db.scalar("SELECT status FROM orders WHERE id = :id", id=order["id"]) == "pending"
 ```
 
 ## Test Verisi ve Temizlik
@@ -177,38 +178,15 @@ Bir kullanıcının istek atabilmesi (token'ının kabul edilmesi) için hesabı
 - Merchant'ın `status` alanı (`pending`/`approved`/`rejected`) uygunluğu etkilemez; sadece `is_verified` bakılır.
 - 403 yanıtlarının `detail` değerleri: `User is inactive`, `User is not verified`, `Courier is not verified`, `Merchant is not verified`.
 
-Bu kurallar S1, S2 ve S3 hikâyeleri içinde test edilir.
+Bu kurallar S1, S2, S3, S11 ve S15 hikâyeleri içinde test edilir.
 
-## Case Listesi
+## Hikâye Listesi
 
 Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 
-### User Service
+Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla servisten geçer. Bazı hikâyeler (S5, S6, S11) servisler arası sınırlarda kimsenin veriyi tekrar kontrol etmediği yerleri test eder; bunlar mevcut davranışı sabitler ve bulgular hikâyenin açıklamasında yazılır. Numaralar eklenme sırasını gösterir; hikâyeler konularına göre gruplanmıştır.
 
-| # | Case | Test dosyası | Durum |
-|---|---|---|---|
-
-### Restaurant Service
-
-| # | Case | Test dosyası | Durum |
-|---|---|---|---|
-
-### Servisler Arası
-
-| # | Case | Test dosyası | Durum |
-|---|---|---|---|
-### Gateway
-
-| # | Case | Test dosyası | Durum |
-|---|---|---|---|
-| G1 | Müşteri gateway üzerinden kayıt olur, e-postasını doğrular, giriş yapar ve `/api/auth/me` ile kendi bilgilerini alır | `tests/gateway/test_customer_auth_through_gateway.py` | Yazıldı |
-| G2 | Kurye gateway üzerinden kayıt olur, e-postasını doğrular, admin kuryeyi onaylar; kurye `PUT /api/couriers/location` ile konumunu gönderir ve konum Redis'teki `courier-locations` GEO anahtarına yazılır | `tests/gateway/test_courier_location_update_through_gateway.py` | Yazıldı |
-
-### Kullanıcı Hikâyeleri
-
-Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla servisten geçer. Bazı hikâyeler (S5, S6) servisler arası sınırlarda kimsenin veriyi tekrar kontrol etmediği yerleri test eder; bunlar mevcut davranışı sabitler ve bulgular hikâyenin açıklamasında yazılır.
-
-#### Kayıt ve Onay
+### Kayıt ve Onay
 
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
@@ -217,7 +195,7 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 | S3 | Admin başvuruları inceler: birkaç kurye ve merchant kayıt olur; admin kullanıcıları rol bazında listeler, bazılarını onaylar, bir merchant'ı `rejected` yapar. Sadece onaylananlar courier-service / restaurant-service'i kullanabilir (merchant `status` uygunluğu etkilemez; reddedilen merchant onaylanmadığı için engellenir) | `tests/stories/test_s03_admin_reviews_applicants.py` | Yazıldı |
 | S15 | Merchant onboarding: merchant kayıt olup giriş yapar; restoran açmaya çalışır ve önce `User is not verified`, e-postasını doğruladıktan sonra `Merchant is not verified` ile engellenir. Admin merchant'ı onaylar; aynı token ile restoran, kategori ve ürün ekler, müşteri ürünü sepetine ekleyebilir | `tests/stories/test_s15_merchant_onboarding.py` | Yazıldı |
 
-#### Merchant ve Menü
+### Merchant ve Menü
 
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
@@ -226,7 +204,7 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 | S6 | Merchant restoranı kapatır: müşterinin dolu bir sepeti ve bekleyen siparişi varken merchant restoranı siler. Sepetin siparişe dönüşüp dönüşmediği ve bekleyen siparişin akıbeti sabitlenir. **Bulgu:** restoran silinmesi order-service'e yansımaz; silinmiş restoranın sepeti hâlâ siparişe dönüşür, bekleyen siparişler ise `pending` olarak kalır ve merchant bunları artık listeleyemez, kabul veya iptal edemez (`Restaurant not found`) | `tests/stories/test_s06_merchant_deletes_restaurant.py` | Yazıldı |
 | S7 | İki merchant, ayrı veri: A ve B'nin restoranları sipariş alır; her biri sadece kendi siparişlerini görür ve yönetir, B, A'nın siparişine (kendi restoran id'si üzerinden bile), menüsüne ve restoranına dokunamaz (404); A'nın verisi değişmeden kalır | `tests/stories/test_s07_merchants_see_only_their_own_data.py` | Yazıldı |
 
-#### Müşteri Siparişi
+### Müşteri Siparişi
 
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
@@ -236,13 +214,13 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 | S11 | Akış ortasında hesap pasife alınır: aktif siparişleri olan merchant pasife alınır (endpoint olmadığı için DB üzerinden); merchant siparişleri yönetemez ve giriş yapamaz (`User is inactive`), müşterinin siparişi olduğu durumda kalır. Tekrar aktifleştirilince aynı token ile siparişleri yönetmeye devam eder. **Bulgu:** merchant pasifken restoranı açık kalır ve müşteriler sipariş vermeye devam edebilir, ama bu siparişleri kabul edecek kimse yoktur | `tests/stories/test_s11_merchant_deactivated_mid_flow.py` | Yazıldı |
 | S16 | Merchant siparişi sonuna kadar götürür: müşteri sipariş verir (sepet silinir); merchant ilk siparişi accept → prepare → ready-for-pickup yapar, sonrasında iptal etmeye çalışınca 409 alır. İkinci siparişi accept → prepare → cancel yapar, sonrasında ready-for-pickup 409 döner. Her adım `order_db` üzerinden de doğrulanır | `tests/stories/test_s16_merchant_takes_order_to_the_end.py` | Yazıldı |
 
-#### Gateway
+### Gateway
 
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
 | S12 | Gateway üzerinden tam teslimat yolu: müşteri, merchant ve kurye onboarding; müşteri sipariş verir, merchant siparişi ready-for-pickup'a getirir, kurye konum gönderir. Tüm istekler (onboarding dahil) gateway'den geçer. Tüm platform için smoke test | `tests/stories/test_s12_full_delivery_path_through_gateway.py` | Yazıldı |
 
-#### Olaylar ve Dispatch
+### Olaylar ve Dispatch
 
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
