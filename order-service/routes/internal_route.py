@@ -28,3 +28,33 @@ def accept_restaurant_order(
     order_service: Annotated[OrderService, Depends(get_order_service)],
 ):
     return order_service.accept(restaurant_id, order_id)
+
+
+@router.put("/restaurants/{restaurant_id}/orders/{order_id}/prepare", response_model=OrderResponse)
+def prepare_restaurant_order(
+    restaurant_id: uuid.UUID,
+    order_id: uuid.UUID,
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.prepare(restaurant_id, order_id)
+
+
+@router.put(
+    "/restaurants/{restaurant_id}/orders/{order_id}/ready-for-pickup",
+    response_model=OrderResponse,
+)
+def mark_restaurant_order_ready_for_pickup(
+    restaurant_id: uuid.UUID,
+    order_id: uuid.UUID,
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.mark_ready_for_pickup(restaurant_id, order_id)
+
+
+@router.put("/restaurants/{restaurant_id}/orders/{order_id}/cancel", response_model=OrderResponse)
+def cancel_restaurant_order(
+    restaurant_id: uuid.UUID,
+    order_id: uuid.UUID,
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.cancel(restaurant_id, order_id)

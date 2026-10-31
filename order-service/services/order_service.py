@@ -45,13 +45,49 @@ class OrderService:
         return self.order_repo.list_by_restaurant(restaurant_id, order_status)
 
     def accept(self, restaurant_id: uuid.UUID, order_id: uuid.UUID) -> Order:
+        return self._transition(
+            restaurant_id, order_id, (OrderStatus.PENDING,), OrderStatus.CONFIRMED, "accepted"
+        )
+
+    def prepare(self, restaurant_id: uuid.UUID, order_id: uuid.UUID) -> Order:
+        return self._transition(
+            restaurant_id, order_id, (OrderStatus.CONFIRMED,), OrderStatus.PREPARING, "prepared"
+        )
+
+    def mark_ready_for_pickup(self, restaurant_id: uuid.UUID, order_id: uuid.UUID) -> Order:
+        return self._transition(
+            restaurant_id,
+            order_id,
+            (OrderStatus.PREPARING,),
+            OrderStatus.READY_FOR_PICKUP,
+            "marked ready for pickup",
+        )
+
+    def cancel(self, restaurant_id: uuid.UUID, order_id: uuid.UUID) -> Order:
+        return self._transition(
+            restaurant_id,
+            order_id,
+            (OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.PREPARING),
+            OrderStatus.CANCELLED,
+            "cancelled",
+        )
+
+    def _transition(
+        self,
+        restaurant_id: uuid.UUID,
+        order_id: uuid.UUID,
+        from_statuses: tuple[OrderStatus, ...],
+        to_status: OrderStatus,
+        action: str,
+    ) -> Order:
         order = self.order_repo.get_by_restaurant_for_update(order_id, restaurant_id)
         if order is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Order not found")
-        if order.status != OrderStatus.PENDING:
+        if order.status not in from_statuses:
+            allowed = ", ".join(s.value for s in from_statuses)
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
-                f"Only pending orders can be accepted; order is {order.status.value}",
+                f"Only {allowed} orders can be {action}; order is {order.status.value}",
             )
-        order.status = OrderStatus.CONFIRMED
+        order.status = to_status
         return self.order_repo.save(order)

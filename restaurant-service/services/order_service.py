@@ -12,7 +12,7 @@ from schemas.order_schema import OrderResponse, OrderStatus
 logger = logging.getLogger(__name__)
 
 RESTAURANT_ORDERS_PATH = "/internal/restaurants/{restaurant_id}/orders"
-ACCEPT_ORDER_PATH = "/internal/restaurants/{restaurant_id}/orders/{order_id}/accept"
+ORDER_ACTION_PATH = "/internal/restaurants/{restaurant_id}/orders/{order_id}/{action}"
 
 _orders_adapter = TypeAdapter(list[OrderResponse])
 
@@ -39,8 +39,30 @@ class OrderService:
     def accept(
         self, merchant_id: uuid.UUID, restaurant_id: uuid.UUID, order_id: uuid.UUID
     ) -> OrderResponse:
+        return self._run_action(merchant_id, restaurant_id, order_id, "accept")
+
+    def prepare(
+        self, merchant_id: uuid.UUID, restaurant_id: uuid.UUID, order_id: uuid.UUID
+    ) -> OrderResponse:
+        return self._run_action(merchant_id, restaurant_id, order_id, "prepare")
+
+    def mark_ready_for_pickup(
+        self, merchant_id: uuid.UUID, restaurant_id: uuid.UUID, order_id: uuid.UUID
+    ) -> OrderResponse:
+        return self._run_action(merchant_id, restaurant_id, order_id, "ready-for-pickup")
+
+    def cancel(
+        self, merchant_id: uuid.UUID, restaurant_id: uuid.UUID, order_id: uuid.UUID
+    ) -> OrderResponse:
+        return self._run_action(merchant_id, restaurant_id, order_id, "cancel")
+
+    def _run_action(
+        self, merchant_id: uuid.UUID, restaurant_id: uuid.UUID, order_id: uuid.UUID, action: str
+    ) -> OrderResponse:
         self._ensure_restaurant_owned(merchant_id, restaurant_id)
-        path = ACCEPT_ORDER_PATH.format(restaurant_id=restaurant_id, order_id=order_id)
+        path = ORDER_ACTION_PATH.format(
+            restaurant_id=restaurant_id, order_id=order_id, action=action
+        )
         response = self._request("PUT", path)
         return self._parse(response, path, OrderResponse.model_validate_json)
 

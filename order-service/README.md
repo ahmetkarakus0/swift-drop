@@ -89,6 +89,9 @@ These are for other services and are mounted outside `/api`, so the gateway neve
 |---|---|---|
 | GET | `/internal/restaurants/{restaurant_id}/orders` | List a restaurant's orders with their items, newest first. Optional `?status=` filter. Used by the restaurant service |
 | PUT | `/internal/restaurants/{restaurant_id}/orders/{order_id}/accept` | Change a restaurant's order from `pending` to `confirmed`. Returns `404` if the order doesn't belong to the restaurant and `409` if it isn't pending. Used by the restaurant service |
+| PUT | `/internal/restaurants/{restaurant_id}/orders/{order_id}/prepare` | Change a restaurant's order from `confirmed` to `preparing`. Returns `404` if the order doesn't belong to the restaurant and `409` if it isn't confirmed. Used by the restaurant service |
+| PUT | `/internal/restaurants/{restaurant_id}/orders/{order_id}/ready-for-pickup` | Change a restaurant's order from `preparing` to `ready_for_pickup`. Returns `404` if the order doesn't belong to the restaurant and `409` if it isn't preparing. Used by the restaurant service |
+| PUT | `/internal/restaurants/{restaurant_id}/orders/{order_id}/cancel` | Change a restaurant's order to `cancelled`. Allowed from `pending`, `confirmed` or `preparing`; otherwise `409`. Returns `404` if the order doesn't belong to the restaurant. Used by the restaurant service |
 
 ## Tables
 

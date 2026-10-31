@@ -28,3 +28,36 @@ def accept_order(
     order_service: Annotated[OrderService, Depends(get_order_service)],
 ):
     return order_service.accept(merchant_id, restaurant_id, order_id)
+
+
+@router.put("/restaurants/{restaurant_id}/orders/{order_id}/prepare", response_model=OrderResponse)
+def prepare_order(
+    restaurant_id: uuid.UUID,
+    order_id: uuid.UUID,
+    merchant_id: Annotated[uuid.UUID, Depends(get_current_merchant_id)],
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.prepare(merchant_id, restaurant_id, order_id)
+
+
+@router.put(
+    "/restaurants/{restaurant_id}/orders/{order_id}/ready-for-pickup",
+    response_model=OrderResponse,
+)
+def mark_order_ready_for_pickup(
+    restaurant_id: uuid.UUID,
+    order_id: uuid.UUID,
+    merchant_id: Annotated[uuid.UUID, Depends(get_current_merchant_id)],
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.mark_ready_for_pickup(merchant_id, restaurant_id, order_id)
+
+
+@router.put("/restaurants/{restaurant_id}/orders/{order_id}/cancel", response_model=OrderResponse)
+def cancel_order(
+    restaurant_id: uuid.UUID,
+    order_id: uuid.UUID,
+    merchant_id: Annotated[uuid.UUID, Depends(get_current_merchant_id)],
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.cancel(merchant_id, restaurant_id, order_id)
