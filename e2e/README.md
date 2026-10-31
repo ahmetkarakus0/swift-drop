@@ -197,7 +197,6 @@ Durum: `Planlandı` = henüz yazılmadı, `Yazıldı` = test dosyası mevcut.
 
 | # | Case | Test dosyası | Durum |
 |---|---|---|---|
-| C1 | Merchant doğrulanmadan restoran oluşturamaz (önce `User is not verified`, e-posta doğrulandıktan sonra `Merchant is not verified`); admin merchant'ı doğruladıktan sonra aynı token ile restoran oluşturur | `tests/cross_service/test_merchant_verification_gates_restaurant_creation.py` | Yazıldı |
 | C2 | Doğrulanmış müşteri ve onaylı merchant; merchant açık restoran, kategori ve ürün ekler; müşteri ürünü sepete ekleyip sipariş verir (sepet silinir). Merchant ilk siparişi sırayla accept → prepare → ready-for-pickup yapar (sonrasında cancel 409); ikinci siparişi accept → prepare → cancel yapar (sonrasında ready-for-pickup 409). Her adım `order_db` üzerinden de doğrulanır | `tests/cross_service/test_customer_order_lifecycle.py` | Yazıldı |
 
 ### Gateway
@@ -218,6 +217,7 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 | S1 | Kurye onboarding: kurye kayıt olur ve giriş yapar; konum göndermeye çalışır ve önce `User is not verified`, e-postasını doğruladıktan sonra `Courier is not verified` ile engellenir (Redis'e yazılmaz). Admin kuryeyi onaylar; aynı token ile konum gönderilir ve Redis'e yazılır | `tests/stories/test_s01_courier_onboarding.py` | Yazıldı |
 | S2 | Müşteri onboarding: müşteri kayıt olup giriş yapar; e-postasını doğrulamadan sepete ürün eklemeye çalışır ve `User is not verified` ile engellenir. E-postasını doğruladıktan sonra aynı token ile sepete ekler ve sipariş verir | `tests/stories/test_s02_customer_onboarding.py` | Yazıldı |
 | S3 | Admin başvuruları inceler: birkaç kurye ve merchant kayıt olur; admin kullanıcıları rol bazında listeler, bazılarını onaylar, bir merchant'ı `rejected` yapar. Sadece onaylananlar courier-service / restaurant-service'i kullanabilir (merchant `status` uygunluğu etkilemez; reddedilen merchant onaylanmadığı için engellenir) | `tests/stories/test_s03_admin_reviews_applicants.py` | Yazıldı |
+| S15 | Merchant onboarding: merchant kayıt olup giriş yapar; restoran açmaya çalışır ve önce `User is not verified`, e-postasını doğruladıktan sonra `Merchant is not verified` ile engellenir. Admin merchant'ı onaylar; aynı token ile restoran, kategori ve ürün ekler, müşteri ürünü sepetine ekleyebilir | `tests/stories/test_s15_merchant_onboarding.py` | Yazıldı |
 
 #### Merchant ve Menü
 
