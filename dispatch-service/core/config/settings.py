@@ -18,6 +18,19 @@ class Settings(BaseSettings):
 
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
     KAFKA_FLUSH_TIMEOUT_SECONDS: float = 10.0
+    KAFKA_ORDER_EVENTS_TOPIC: str = "order-events"
+    KAFKA_DISPATCH_EVENTS_TOPIC: str = "dispatch-events"
+    KAFKA_CONSUMER_GROUP_ID: str = "dispatch-service"
+    KAFKA_AUTO_OFFSET_RESET: str = "earliest"
+
+    # Must match courier-service and restaurant-service.
+    COURIER_LOCATIONS_KEY: str = "courier-locations"
+    COURIER_ONLINE_KEY: str = "couriers:online"
+    COURIER_BUSY_KEY: str = "couriers:busy"
+    RESTAURANT_LOCATIONS_KEY: str = "restaurant-locations"
+
+    # Searched in order; the first radius with an available courier wins.
+    COURIER_SEARCH_RADII_KM: list[float] = [2.0, 5.0]
 
 
 @lru_cache
