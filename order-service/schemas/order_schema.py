@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from models import OrderStatus
 from schemas.common import DeliveryAddress
@@ -12,6 +12,10 @@ from schemas.common import DeliveryAddress
 class OrderCreate(BaseModel):
     basket_id: uuid.UUID
     delivery_address: DeliveryAddress
+
+
+class ReadyForPickupSearch(BaseModel):
+    restaurant_ids: list[uuid.UUID] = Field(max_length=1000)
 
 
 class OrderItemResponse(BaseModel):

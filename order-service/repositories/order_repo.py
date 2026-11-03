@@ -24,6 +24,19 @@ class OrderRepository:
             query = query.where(Order.status == status)
         return list(self.db.scalars(query))
 
+    def list_unassigned_ready_for_pickup(self, restaurant_ids: list[uuid.UUID]) -> list[Order]:
+        query = (
+            select(Order)
+            .where(
+                Order.restaurant_id.in_(restaurant_ids),
+                Order.status == OrderStatus.READY_FOR_PICKUP,
+                Order.courier_id.is_(None),
+            )
+            .options(selectinload(Order.items))
+            .order_by(Order.updated_at.asc())
+        )
+        return list(self.db.scalars(query))
+
     def get_by_restaurant_for_update(
         self, order_id: uuid.UUID, restaurant_id: uuid.UUID
     ) -> Optional[Order]:

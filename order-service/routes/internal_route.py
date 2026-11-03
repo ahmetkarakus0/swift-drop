@@ -5,11 +5,20 @@ from fastapi import APIRouter, Depends
 
 from core.dependencies import get_order_service
 from models import OrderStatus
-from schemas.order_schema import OrderResponse
+from schemas.order_schema import OrderResponse, ReadyForPickupSearch
 from services.order_service import OrderService
 
 # Mounted outside /api, so the gateway never forwards these; for service-to-service calls only.
 router = APIRouter(prefix="/internal", tags=["internal"])
+
+
+# POST because the restaurant list can be too long for a query string.
+@router.post("/orders/ready-for-pickup/search", response_model=list[OrderResponse])
+def search_unassigned_ready_for_pickup_orders(
+    data: ReadyForPickupSearch,
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.get_unassigned_ready_for_pickup(data.restaurant_ids)
 
 
 @router.get("/restaurants/{restaurant_id}/orders", response_model=list[OrderResponse])

@@ -53,6 +53,11 @@ class OrderService:
     ) -> list[Order]:
         return self.order_repo.list_by_restaurant(restaurant_id, order_status)
 
+    def get_unassigned_ready_for_pickup(self, restaurant_ids: list[uuid.UUID]) -> list[Order]:
+        if not restaurant_ids:
+            return []
+        return self.order_repo.list_unassigned_ready_for_pickup(restaurant_ids)
+
     def accept(self, restaurant_id: uuid.UUID, order_id: uuid.UUID) -> Order:
         return self._transition(
             restaurant_id, order_id, (OrderStatus.PENDING,), OrderStatus.CONFIRMED, "accepted"
