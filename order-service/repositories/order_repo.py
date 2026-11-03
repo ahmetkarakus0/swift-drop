@@ -37,6 +37,24 @@ class OrderRepository:
         )
         return list(self.db.scalars(query))
 
+    def get_for_update(self, order_id: uuid.UUID) -> Optional[Order]:
+        return self.db.scalar(
+            select(Order)
+            .where(Order.id == order_id)
+            .options(selectinload(Order.items))
+            .with_for_update()
+        )
+
+    def get_by_courier_for_update(
+        self, order_id: uuid.UUID, courier_id: uuid.UUID
+    ) -> Optional[Order]:
+        return self.db.scalar(
+            select(Order)
+            .where(Order.id == order_id, Order.courier_id == courier_id)
+            .options(selectinload(Order.items))
+            .with_for_update()
+        )
+
     def get_by_restaurant_for_update(
         self, order_id: uuid.UUID, restaurant_id: uuid.UUID
     ) -> Optional[Order]:

@@ -58,6 +58,31 @@ class OrderService:
             return []
         return self.order_repo.list_unassigned_ready_for_pickup(restaurant_ids)
 
+    def assign_courier(self, order_id: uuid.UUID, courier_id: uuid.UUID) -> Order:
+        """Assigns a courier to a ready for pickup order; repeating it for the same courier is a no-op."""
+        order = self.order_repo.get_for_update(order_id)
+        if order is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Order not found")
+        if order.courier_id == courier_id:
+            return order
+        if order.courier_id is not None:
+            raise HTTPException(status.HTTP_409_CONFLICT, "Order already has a courier")
+        if order.status != OrderStatus.READY_FOR_PICKUP:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                f"Only ready_for_pickup orders can be assigned; order is {order.status.value}",
+            )
+        order.courier_id = courier_id
+        order = self.order_repo.save(order)
+        self.event_publisher.courier_assigned(order)
+        return order
+
+    def mark_on_the_way(self, courier_id: uuid.UUID, order_id: uuid.UUID) -> Order:
+        order = self.order_repo.get_by_courier_for_update(order_id, courier_id)
+        return self._change_status(
+            order, (OrderStatus.READY_FOR_PICKUP,), OrderStatus.ON_THE_WAY, "marked on the way"
+        )
+
     def accept(self, restaurant_id: uuid.UUID, order_id: uuid.UUID) -> Order:
         return self._transition(
             restaurant_id, order_id, (OrderStatus.PENDING,), OrderStatus.CONFIRMED, "accepted"
@@ -95,6 +120,15 @@ class OrderService:
         action: str,
     ) -> Order:
         order = self.order_repo.get_by_restaurant_for_update(order_id, restaurant_id)
+        return self._change_status(order, from_statuses, to_status, action)
+
+    def _change_status(
+        self,
+        order: Optional[Order],
+        from_statuses: tuple[OrderStatus, ...],
+        to_status: OrderStatus,
+        action: str,
+    ) -> Order:
         if order is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Order not found")
         if order.status not in from_statuses:

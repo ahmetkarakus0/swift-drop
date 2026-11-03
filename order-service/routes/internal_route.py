@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 
 from core.dependencies import get_order_service
 from models import OrderStatus
-from schemas.order_schema import OrderResponse, ReadyForPickupSearch
+from schemas.order_schema import CourierAssign, OrderResponse, ReadyForPickupSearch
 from services.order_service import OrderService
 
 # Mounted outside /api, so the gateway never forwards these; for service-to-service calls only.
@@ -19,6 +19,24 @@ def search_unassigned_ready_for_pickup_orders(
     order_service: Annotated[OrderService, Depends(get_order_service)],
 ):
     return order_service.get_unassigned_ready_for_pickup(data.restaurant_ids)
+
+
+@router.put("/orders/{order_id}/courier", response_model=OrderResponse)
+def assign_order_courier(
+    order_id: uuid.UUID,
+    data: CourierAssign,
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.assign_courier(order_id, data.courier_id)
+
+
+@router.put("/couriers/{courier_id}/orders/{order_id}/on-the-way", response_model=OrderResponse)
+def mark_courier_order_on_the_way(
+    courier_id: uuid.UUID,
+    order_id: uuid.UUID,
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.mark_on_the_way(courier_id, order_id)
 
 
 @router.get("/restaurants/{restaurant_id}/orders", response_model=list[OrderResponse])

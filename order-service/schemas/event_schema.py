@@ -12,6 +12,7 @@ from schemas.order_schema import OrderResponse
 class OrderEventType(str, enum.Enum):
     ORDER_CREATED = "order.created"
     ORDER_STATUS_UPDATED = "order.status_updated"
+    ORDER_COURIER_ASSIGNED = "order.courier_assigned"
 
 
 class OrderStatusChange(BaseModel):
@@ -20,6 +21,15 @@ class OrderStatusChange(BaseModel):
     restaurant_id: uuid.UUID
     courier_id: Optional[uuid.UUID]
     previous_status: OrderStatus
+    status: OrderStatus
+    updated_at: datetime
+
+
+class CourierAssignment(BaseModel):
+    order_id: uuid.UUID
+    user_id: uuid.UUID
+    restaurant_id: uuid.UUID
+    courier_id: uuid.UUID
     status: OrderStatus
     updated_at: datetime
 
@@ -37,3 +47,10 @@ class OrderCreatedEvent(_EventEnvelope):
 class OrderStatusUpdatedEvent(_EventEnvelope):
     event_type: Literal[OrderEventType.ORDER_STATUS_UPDATED] = OrderEventType.ORDER_STATUS_UPDATED
     data: OrderStatusChange
+
+
+class OrderCourierAssignedEvent(_EventEnvelope):
+    event_type: Literal[OrderEventType.ORDER_COURIER_ASSIGNED] = (
+        OrderEventType.ORDER_COURIER_ASSIGNED
+    )
+    data: CourierAssignment

@@ -5,6 +5,8 @@ from confluent_kafka import KafkaError, KafkaException, Message, Producer
 
 from models import Order, OrderStatus
 from schemas.event_schema import (
+    CourierAssignment,
+    OrderCourierAssignedEvent,
     OrderCreatedEvent,
     OrderStatusChange,
     OrderStatusUpdatedEvent,
@@ -36,6 +38,19 @@ class OrderEventPublisher:
                 restaurant_id=order.restaurant_id,
                 courier_id=order.courier_id,
                 previous_status=previous_status,
+                status=order.status,
+                updated_at=order.updated_at,
+            )
+        )
+        self._publish(str(order.id), event.event_type.value, event.model_dump_json())
+
+    def courier_assigned(self, order: Order) -> None:
+        event = OrderCourierAssignedEvent(
+            data=CourierAssignment(
+                order_id=order.id,
+                user_id=order.user_id,
+                restaurant_id=order.restaurant_id,
+                courier_id=order.courier_id,
                 status=order.status,
                 updated_at=order.updated_at,
             )

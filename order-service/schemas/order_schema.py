@@ -18,6 +18,10 @@ class ReadyForPickupSearch(BaseModel):
     restaurant_ids: list[uuid.UUID] = Field(max_length=1000)
 
 
+class CourierAssign(BaseModel):
+    courier_id: uuid.UUID
+
+
 class OrderItemResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

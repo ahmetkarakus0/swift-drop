@@ -77,7 +77,8 @@ Order events are published to the Kafka topic `order-events` (`KAFKA_ORDER_EVENT
 | Event type | When | `data` |
 |---|---|---|
 | `order.created` | An order is placed | The full order, same shape as the `POST /api/orders` response |
-| `order.status_updated` | An order's status changes (accept, prepare, ready for pickup, cancel) | `order_id`, `user_id`, `restaurant_id`, `courier_id`, `previous_status`, `status`, `updated_at` |
+| `order.status_updated` | An order's status changes (accept, prepare, ready for pickup, on the way, cancel) | `order_id`, `user_id`, `restaurant_id`, `courier_id`, `previous_status`, `status`, `updated_at` |
+| `order.courier_assigned` | A courier is assigned to a `ready_for_pickup` order. The status doesn't change | `order_id`, `user_id`, `restaurant_id`, `courier_id`, `status`, `updated_at` |
 
 Every event has this envelope:
 
@@ -127,6 +128,8 @@ These are for other services and are mounted outside `/api`, so the gateway neve
 | Method | Path | Description |
 |---|---|---|
 | POST | `/internal/orders/ready-for-pickup/search` | List `ready_for_pickup` orders with no courier assigned from the given restaurants, with their items, oldest ready first. Body: `{"restaurant_ids": ["..."]}` (at most 1000). Used by the courier service |
+| PUT | `/internal/orders/{order_id}/courier` | Assign a courier to a `ready_for_pickup` order. Body: `{"courier_id": "..."}`. Returns `404` if the order doesn't exist and `409` if it isn't ready for pickup or another courier already has it. Repeating it for the same courier returns the order unchanged. Used by the courier service |
+| PUT | `/internal/couriers/{courier_id}/orders/{order_id}/on-the-way` | Change a courier's order from `ready_for_pickup` to `on_the_way`. Returns `404` if the order isn't assigned to the courier and `409` if it isn't ready for pickup. Used by the courier service |
 | GET | `/internal/restaurants/{restaurant_id}/orders` | List a restaurant's orders with their items, newest first. Optional `?status=` filter. Used by the restaurant service |
 | PUT | `/internal/restaurants/{restaurant_id}/orders/{order_id}/accept` | Change a restaurant's order from `pending` to `confirmed`. Returns `404` if the order doesn't belong to the restaurant and `409` if it isn't pending. Used by the restaurant service |
 | PUT | `/internal/restaurants/{restaurant_id}/orders/{order_id}/prepare` | Change a restaurant's order from `confirmed` to `preparing`. Returns `404` if the order doesn't belong to the restaurant and `409` if it isn't confirmed. Used by the restaurant service |
