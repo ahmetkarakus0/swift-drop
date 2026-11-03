@@ -7,7 +7,7 @@ Swift Drop's courier service. It owns the `courier_db` PostgreSQL database.
 - FastAPI
 - SQLAlchemy 2 + PostgreSQL (psycopg 3)
 - Alembic for migrations
-- Redis for courier locations
+- Redis for courier locations and availability
 - httpx for calling the user service
 
 ## Project Structure
@@ -67,8 +67,14 @@ To inspect stored locations:
 docker exec -it swift-drop-redis redis-cli -a redis --no-auth-warning GEOPOS courier-locations courier-id-{courier_id}
 ```
 
+## Courier Availability
+
+Online couriers are kept in the Redis set `couriers:online` (`COURIER_ONLINE_KEY`), using the same `courier-id-{courier_id}` members as the location index. The dispatch service only offers orders to couriers that are in this set and not in `couriers:busy`. If Redis can't be reached, the request fails with `503`.
+
 ## Endpoints
 
 | Method | Path | Description |
 |---|---|---|
 | PUT | `/api/couriers/location` | Update the current courier's location. Body: `{"latitude": 41.0082, "longitude": 28.9784}`. Returns `204` |
+| PUT | `/api/couriers/online` | Mark the current courier online, so dispatch can find them. Returns `204` |
+| PUT | `/api/couriers/offline` | Mark the current courier offline. Returns `204` |

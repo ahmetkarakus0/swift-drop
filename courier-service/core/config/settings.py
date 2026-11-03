@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     USER_SERVICE_TIMEOUT_SECONDS: float = 5.0
 
     COURIER_LOCATIONS_KEY: str = "courier-locations"
+    COURIER_ONLINE_KEY: str = "couriers:online"
 
 
 @lru_cache
