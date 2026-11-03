@@ -8,12 +8,12 @@ Swift Drop's courier service. It owns the `courier_db` PostgreSQL database.
 - SQLAlchemy 2 + PostgreSQL (psycopg 3)
 - Alembic for migrations
 - Redis for courier locations and availability
-- httpx for calling the user service
+- httpx for calling the user service and the order service
 
 ## Project Structure
 
 ```
-core/           settings, database session, Redis client, user service client, shared dependencies
+core/           settings, database session, Redis client, user/order service clients, shared dependencies
 models/         SQLAlchemy models
 schemas/        Pydantic request/response models
 repositories/   database access
@@ -38,7 +38,7 @@ alembic/        database migrations
    pip install -r requirements.txt
    ```
 
-3. Copy `.env.example` to `.env` and fill in the values. `REDIS_URL` uses the Redis from `docker-compose.yml` (password `REDIS_PASSWORD`). `USER_SERVICE_URL` must point to a running user service.
+3. Copy `.env.example` to `.env` and fill in the values. `REDIS_URL` uses the Redis from `docker-compose.yml` (password `REDIS_PASSWORD`). `USER_SERVICE_URL` must point to a running user service, and `ORDER_SERVICE_URL` to a running order service for listing nearby orders.
 
 4. Apply migrations and start the service:
 
@@ -71,6 +71,17 @@ docker exec -it swift-drop-redis redis-cli -a redis --no-auth-warning GEOPOS cou
 
 Online couriers are kept in the Redis set `couriers:online` (`COURIER_ONLINE_KEY`), using the same `courier-id-{courier_id}` members as the location index. The dispatch service only offers orders to couriers that are in this set and not in `couriers:busy`. If Redis can't be reached, the request fails with `503`.
 
+## Nearby Orders
+
+`GET /api/couriers/orders/nearby` lists orders that are `ready_for_pickup` and have no courier assigned, at restaurants close to the courier:
+
+1. The courier's position is read from `courier-locations`. If the courier has never sent a location, the request fails with `409`.
+2. Restaurants within `radius_km` (default 5, `NEARBY_ORDERS_DEFAULT_RADIUS_KM`; max 20, `NEARBY_ORDERS_MAX_RADIUS_KM`) are found with `GEOSEARCH` in the Redis GEO set `restaurant-locations` (`RESTAURANT_LOCATIONS_KEY`), written by the restaurant service. Only the nearest 1000 restaurants are considered.
+3. Their waiting orders are fetched from the order service's `POST /internal/orders/ready-for-pickup/search`.
+4. Orders are returned nearest restaurant first, and oldest ready first within a restaurant, up to `limit` (default 20, max 50).
+
+Each order has `id`, `restaurant_id`, `distance_km` (from the courier to the restaurant), `total_price`, `delivery_address`, `items` (`item_name` and `quantity`), `created_at` and `ready_at`. The list is a snapshot; it doesn't reserve the orders. If Redis or the order service can't be reached, the request fails with `503`.
+
 ## Endpoints
 
 | Method | Path | Description |
@@ -78,3 +89,4 @@ Online couriers are kept in the Redis set `couriers:online` (`COURIER_ONLINE_KEY
 | PUT | `/api/couriers/location` | Update the current courier's location. Body: `{"latitude": 41.0082, "longitude": 28.9784}`. Returns `204` |
 | PUT | `/api/couriers/online` | Mark the current courier online, so dispatch can find them. Returns `204` |
 | PUT | `/api/couriers/offline` | Mark the current courier offline. Returns `204` |
+| GET | `/api/couriers/orders/nearby` | List orders waiting for a courier near the current courier, nearest first. Optional `?radius_km=5&limit=20` |

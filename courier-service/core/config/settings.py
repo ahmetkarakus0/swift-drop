@@ -19,8 +19,16 @@ class Settings(BaseSettings):
     USER_SERVICE_URL: str = "http://127.0.0.1:8000"
     USER_SERVICE_TIMEOUT_SECONDS: float = 5.0
 
+    ORDER_SERVICE_URL: str = "http://127.0.0.1:8002"
+    ORDER_SERVICE_TIMEOUT_SECONDS: float = 5.0
+
     COURIER_LOCATIONS_KEY: str = "courier-locations"
     COURIER_ONLINE_KEY: str = "couriers:online"
+    # Must match restaurant-service.
+    RESTAURANT_LOCATIONS_KEY: str = "restaurant-locations"
+
+    NEARBY_ORDERS_DEFAULT_RADIUS_KM: float = 5.0
+    NEARBY_ORDERS_MAX_RADIUS_KM: float = 20.0
 
 
 @lru_cache
