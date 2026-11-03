@@ -7,6 +7,7 @@ ROUTES: dict[str, str] = {
     "users": settings.USER_SERVICE_URL,
     "couriers": settings.USER_SERVICE_URL,
     "couriers/location": settings.COURIER_SERVICE_URL,
+    "couriers/orders": settings.COURIER_SERVICE_URL,
     "merchants": settings.USER_SERVICE_URL,
     "restaurants": settings.RESTAURANT_SERVICE_URL,
     "categories": settings.RESTAURANT_SERVICE_URL,

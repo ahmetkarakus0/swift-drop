@@ -54,6 +54,7 @@ Requests are routed by the path prefix after `/api`; when several prefixes match
 | `/api/auth/*` | User service |
 | `/api/users/*` | User service |
 | `/api/couriers/location` | Courier service |
+| `/api/couriers/orders/*` | Courier service |
 | `/api/couriers/*` | User service |
 | `/api/merchants/*` | User service |
 | `/api/restaurants/*` | Restaurant service |
