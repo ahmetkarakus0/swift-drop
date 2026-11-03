@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -31,3 +32,17 @@ class NearbyOrderResponse(BaseModel):
     items: list[OrderItemResponse]
     created_at: datetime
     ready_at: datetime
+
+
+class CourierOrderResponse(BaseModel):
+    """order-service's response for a courier's order (assign, on the way)."""
+
+    id: uuid.UUID
+    restaurant_id: uuid.UUID
+    courier_id: Optional[uuid.UUID]
+    status: str
+    total_price: Decimal
+    delivery_address: str
+    items: list[OrderItemResponse]
+    created_at: datetime
+    updated_at: datetime

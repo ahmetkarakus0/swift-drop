@@ -24,6 +24,8 @@ class Settings(BaseSettings):
 
     COURIER_LOCATIONS_KEY: str = "courier-locations"
     COURIER_ONLINE_KEY: str = "couriers:online"
+    # Must match dispatch-service.
+    COURIER_BUSY_KEY: str = "couriers:busy"
     # Must match restaurant-service.
     RESTAURANT_LOCATIONS_KEY: str = "restaurant-locations"
 

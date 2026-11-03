@@ -82,6 +82,22 @@ Online couriers are kept in the Redis set `couriers:online` (`COURIER_ONLINE_KEY
 
 Each order has `id`, `restaurant_id`, `distance_km` (from the courier to the restaurant), `total_price`, `delivery_address`, `items` (`item_name` and `quantity`), `created_at` and `ready_at`. The list is a snapshot; it doesn't reserve the orders. If Redis or the order service can't be reached, the request fails with `503`.
 
+## Selecting an Order
+
+`PUT /api/couriers/orders/{order_id}/select` assigns an order to the current courier and puts the courier in busy mode:
+
+1. The courier must be online (in `couriers:online`); otherwise the request fails with `409`. In the same atomic Redis step, the courier is added to the Redis set `couriers:busy` (`COURIER_BUSY_KEY`), so dispatch stops offering them orders. If they are already in it, the request fails with `409` and nothing changes; a courier holds one order at a time.
+2. The order is assigned with the order service's `PUT /internal/orders/{order_id}/courier`. Two couriers selecting the same order are serialized there; the second one gets `409`.
+3. If the assignment fails (`404` unknown order, `409` not `ready_for_pickup` or already taken, `503` order service unreachable), the courier is removed from `couriers:busy` again and the error is returned.
+
+The response is the assigned order: `id`, `restaurant_id`, `courier_id`, `status` (still `ready_for_pickup`), `total_price`, `delivery_address`, `items`, `created_at`, `updated_at`. If Redis can't be reached, the request fails with `503`.
+
+Nothing removes a courier from `couriers:busy` yet; that will come with delivery completion.
+
+## Picking Up an Order
+
+`PUT /api/couriers/orders/{order_id}/on-the-way` changes the current courier's order from `ready_for_pickup` to `on_the_way`, through the order service's `PUT /internal/couriers/{courier_id}/orders/{order_id}/on-the-way`. It returns `404` if the order isn't assigned to the courier, `409` if it isn't `ready_for_pickup`, and `503` if the order service can't be reached. The courier stays busy. The response has the same shape as selecting an order.
+
 ## Endpoints
 
 | Method | Path | Description |
@@ -90,3 +106,5 @@ Each order has `id`, `restaurant_id`, `distance_km` (from the courier to the res
 | PUT | `/api/couriers/online` | Mark the current courier online, so dispatch can find them. Returns `204` |
 | PUT | `/api/couriers/offline` | Mark the current courier offline. Returns `204` |
 | GET | `/api/couriers/orders/nearby` | List orders waiting for a courier near the current courier, nearest first. Optional `?radius_km=5&limit=20` |
+| PUT | `/api/couriers/orders/{order_id}/select` | Take an order that is ready for pickup and go busy. The courier must be online. Returns the assigned order |
+| PUT | `/api/couriers/orders/{order_id}/on-the-way` | Mark the courier's order as picked up (`on_the_way`). Returns the order |

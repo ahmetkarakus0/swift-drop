@@ -9,12 +9,16 @@ from core.dependencies import (
     get_current_courier_id,
     get_location_service,
     get_nearby_order_service,
+    get_order_selection_service,
+    get_order_service,
 )
 from schemas.location_schema import CourierLocationUpdate
-from schemas.order_schema import NearbyOrderResponse
+from schemas.order_schema import CourierOrderResponse, NearbyOrderResponse
 from services.availability_service import AvailabilityService
 from services.location_service import LocationService
 from services.nearby_order_service import NearbyOrderService
+from services.order_selection_service import OrderSelectionService
+from services.order_service import OrderService
 
 router = APIRouter(prefix="/couriers", tags=["couriers"])
 
@@ -57,3 +61,21 @@ def list_nearby_orders(
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
 ):
     return nearby_order_service.find_nearest(courier_id, radius_km, limit)
+
+
+@router.put("/orders/{order_id}/select", response_model=CourierOrderResponse)
+def select_order(
+    order_id: uuid.UUID,
+    courier_id: Annotated[uuid.UUID, Depends(get_current_courier_id)],
+    order_selection_service: Annotated[OrderSelectionService, Depends(get_order_selection_service)],
+):
+    return order_selection_service.select(courier_id, order_id)
+
+
+@router.put("/orders/{order_id}/on-the-way", response_model=CourierOrderResponse)
+def mark_order_on_the_way(
+    order_id: uuid.UUID,
+    courier_id: Annotated[uuid.UUID, Depends(get_current_courier_id)],
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+):
+    return order_service.mark_on_the_way(courier_id, order_id)

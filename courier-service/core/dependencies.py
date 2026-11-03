@@ -18,6 +18,7 @@ from services.auth_service import AuthService
 from services.availability_service import AvailabilityService
 from services.location_service import LocationService
 from services.nearby_order_service import NearbyOrderService
+from services.order_selection_service import OrderSelectionService
 from services.order_service import OrderService
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -69,7 +70,7 @@ def get_location_service(
 def get_availability_repository(
     redis: Annotated[Redis, Depends(get_redis)],
 ) -> AvailabilityRepository:
-    return AvailabilityRepository(redis, settings.COURIER_ONLINE_KEY)
+    return AvailabilityRepository(redis, settings.COURIER_ONLINE_KEY, settings.COURIER_BUSY_KEY)
 
 
 def get_availability_service(
@@ -98,3 +99,10 @@ def get_nearby_order_service(
     order_service: Annotated[OrderService, Depends(get_order_service)],
 ) -> NearbyOrderService:
     return NearbyOrderService(location_repo, restaurant_location_repo, order_service)
+
+
+def get_order_selection_service(
+    availability_repo: Annotated[AvailabilityRepository, Depends(get_availability_repository)],
+    order_service: Annotated[OrderService, Depends(get_order_service)],
+) -> OrderSelectionService:
+    return OrderSelectionService(availability_repo, order_service)
