@@ -4,13 +4,17 @@ from typing import Annotated
 import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from redis import Redis
 from sqlalchemy.orm import Session
 
+from core.config.settings import settings
 from core.database import get_db
 from core.order_service import get_order_service_client
+from core.redis import get_redis
 from core.user_service import get_user_service_client
 from repositories.category_repo import CategoryRepository
 from repositories.item_repo import ItemRepository
+from repositories.location_repo import RestaurantLocationRepository
 from repositories.restaurant_repo import RestaurantRepository
 from schemas.auth_schema import CurrentUser, UserRole
 from services.auth_service import AuthService
@@ -67,10 +71,19 @@ def get_item_repository(db: Annotated[Session, Depends(get_db)]) -> ItemReposito
     return ItemRepository(db)
 
 
+def get_restaurant_location_repository(
+    redis: Annotated[Redis, Depends(get_redis)],
+) -> RestaurantLocationRepository:
+    return RestaurantLocationRepository(redis, settings.RESTAURANT_LOCATIONS_KEY)
+
+
 def get_restaurant_service(
     restaurant_repo: Annotated[RestaurantRepository, Depends(get_restaurant_repository)],
+    location_repo: Annotated[
+        RestaurantLocationRepository, Depends(get_restaurant_location_repository)
+    ],
 ) -> RestaurantService:
-    return RestaurantService(restaurant_repo)
+    return RestaurantService(restaurant_repo, location_repo)
 
 
 def get_category_service(

@@ -26,6 +26,11 @@ Description = Annotated[str, StringConstraints(strip_whitespace=True, min_length
 PostalCode = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=20)]
 Price = Annotated[Decimal, Field(ge=0, max_digits=10, decimal_places=2, examples=["129.90"])]
 
+# Redis GEO indexes only accept latitudes within the Web Mercator range.
+MAX_LATITUDE = 85.05112878
+Latitude = Annotated[float, Field(ge=-MAX_LATITUDE, le=MAX_LATITUDE, examples=[40.9869])]
+Longitude = Annotated[float, Field(ge=-180, le=180, examples=[29.0265])]
+
 
 class PatchModel(BaseModel):
     """Partial update body. Omitted fields are left unchanged; explicit nulls are only

@@ -7,12 +7,13 @@ Swift Drop's restaurant service. Lets merchants manage their restaurants, menu c
 - FastAPI
 - SQLAlchemy 2 + PostgreSQL (psycopg 3)
 - Alembic for migrations
+- Redis for restaurant locations
 - httpx for calling the user service and the order service
 
 ## Project Structure
 
 ```
-core/           settings, database session, user/order service clients, shared dependencies
+core/           settings, database session, Redis client, user/order service clients, shared dependencies
 models/         SQLAlchemy models (restaurants, categories, items)
 schemas/        Pydantic request/response models
 repositories/   database access
@@ -23,7 +24,7 @@ alembic/        database migrations
 
 ## Setup
 
-1. Start PostgreSQL from the repository root:
+1. Start PostgreSQL and Redis from the repository root:
 
    ```bash
    docker compose up -d
@@ -37,7 +38,7 @@ alembic/        database migrations
    pip install -r requirements.txt
    ```
 
-3. Copy `.env.example` to `.env` and fill in the values. `USER_SERVICE_URL` must point to a running user service, and `ORDER_SERVICE_URL` to a running order service for listing orders.
+3. Copy `.env.example` to `.env` and fill in the values. `REDIS_URL` uses the Redis from `docker-compose.yml` (password `REDIS_PASSWORD`). `USER_SERVICE_URL` must point to a running user service, and `ORDER_SERVICE_URL` to a running order service for listing orders.
 
 4. Apply migrations and start the service:
 
@@ -55,6 +56,12 @@ Every `/api` endpoint requires `Authorization: Bearer <access_token>`, using an 
 Only merchants can use this service. Requests are rejected with `403` if the user is not a merchant, or if the user service considers them ineligible (inactive, email not verified, or merchant not verified by an admin). If the user service can't be reached, requests fail with `503`.
 
 Merchants can only see and change their own restaurants, categories and items; anything else returns `404`.
+
+## Restaurant Locations
+
+Creating a restaurant requires `latitude` (between -85.05112878 and 85.05112878, the range Redis GEO accepts) and `longitude` (between -180 and 180); both can be changed with `PATCH`. Restaurants created before coordinates were added have `null` for both until they are updated.
+
+Coordinates are also written to the Redis GEO set `restaurant-locations` (`RESTAURANT_LOCATIONS_KEY`) as the member `restaurant-id-{restaurant_id}`, so the dispatch service can search for couriers around the restaurant. The entry is written after the database commit on create and on coordinate updates, and removed when the restaurant is deleted. This is best-effort: if Redis can't be reached the request still succeeds and the error is logged.
 
 ## Endpoints
 

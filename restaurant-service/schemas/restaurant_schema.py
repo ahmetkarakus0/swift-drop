@@ -5,7 +5,15 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 from schemas.category_schema import CategoryWithItemsResponse
-from schemas.common import LongText, PatchModel, PhoneNumber, PostalCode, ShortText
+from schemas.common import (
+    Latitude,
+    LongText,
+    Longitude,
+    PatchModel,
+    PhoneNumber,
+    PostalCode,
+    ShortText,
+)
 
 
 class RestaurantCreate(BaseModel):
@@ -18,6 +26,8 @@ class RestaurantCreate(BaseModel):
     postal_code: PostalCode
     address_line1: LongText
     address_line2: Optional[LongText] = None
+    latitude: Latitude
+    longitude: Longitude
     is_open: bool = False
 
 
@@ -33,6 +43,8 @@ class RestaurantUpdate(PatchModel):
     postal_code: Optional[PostalCode] = None
     address_line1: Optional[LongText] = None
     address_line2: Optional[LongText] = None
+    latitude: Optional[Latitude] = None
+    longitude: Optional[Longitude] = None
     is_open: Optional[bool] = None
 
 
@@ -53,6 +65,8 @@ class RestaurantResponse(BaseModel):
     postal_code: str
     address_line1: str
     address_line2: Optional[str]
+    latitude: Optional[float]
+    longitude: Optional[float]
     created_at: datetime
 
 

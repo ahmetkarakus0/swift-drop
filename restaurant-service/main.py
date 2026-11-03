@@ -5,6 +5,7 @@ from fastapi import APIRouter, FastAPI
 
 from core.database import engine
 from core.order_service import order_service_client
+from core.redis import redis_client
 from core.user_service import user_service_client
 from routes.category_route import router as category_router
 from routes.internal_route import router as internal_router
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI):
     yield
     user_service_client.close()
     order_service_client.close()
+    redis_client.close()
     engine.dispose()
 
 
