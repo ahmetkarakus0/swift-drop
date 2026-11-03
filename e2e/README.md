@@ -4,7 +4,7 @@ Servislerin çalışan hâllerine gerçek HTTP istekleri atan ve sonuçları do�
 
 ## Ön Koşullar
 
-1. Postgres, Redis ve Kafka ayakta olmalı (repo kökünden; Kafka sadece S13 için gerekli):
+1. Postgres, Redis ve Kafka ayakta olmalı (repo kökünden; Kafka sadece S13 ve S17 için gerekli):
 
    ```bash
    docker compose up -d
@@ -16,6 +16,7 @@ Servislerin çalışan hâllerine gerçek HTTP istekleri atan ve sonuçları do�
    - restaurant-service: http://127.0.0.1:8001
    - order-service: http://127.0.0.1:8002 (sadece sepet/sipariş hikâyeleri için gerekli)
    - courier-service: http://127.0.0.1:8003 (sadece kurye konum hikâyeleri için gerekli)
+   - dispatch-service: http://127.0.0.1:8004 (sadece dispatch hikâyeleri için gerekli)
    - gateway: http://127.0.0.1:8080 (sadece `gateway` marker'lı hikâyeler için gerekli)
 
    Servisler veya veritabanı erişilemezse test oturumu açıklayıcı bir hata mesajıyla hemen durur.
@@ -34,12 +35,15 @@ copy .env.example .env          # Linux/macOS: cp .env.example .env
 
 | Değişken | Açıklama |
 |---|---|
-| `USER_SERVICE_URL`, `RESTAURANT_SERVICE_URL`, `ORDER_SERVICE_URL`, `COURIER_SERVICE_URL` | Servislerin adresleri |
+| `USER_SERVICE_URL`, `RESTAURANT_SERVICE_URL`, `ORDER_SERVICE_URL`, `COURIER_SERVICE_URL`, `DISPATCH_SERVICE_URL` | Servislerin adresleri |
 | `GATEWAY_URL` | Gateway adresi |
 | `USER_DB_URL`, `RESTAURANT_DB_URL`, `ORDER_DB_URL` | Servis veritabanlarına doğrudan bağlantı |
-| `REDIS_URL` | user-service ve courier-service'in kullandığı Redis (token iptali ve kurye konumu kontrolleri için) |
+| `REDIS_URL` | Servislerin ortak Redis'i (token iptali, kurye/restoran konumu ve kurye müsaitliği kontrolleri için) |
 | `KAFKA_BOOTSTRAP_SERVERS`, `KAFKA_ORDER_EVENTS_TOPIC`, `KAFKA_TIMEOUT_SECONDS` | order-service'in sipariş olaylarını yayınladığı Kafka ve topic; olay bekleme süresi |
+| `KAFKA_DISPATCH_EVENTS_TOPIC` | dispatch-service'in kurye arama sonuçlarını yayınladığı topic (varsayılan `dispatch-events`) |
 | `COURIER_LOCATIONS_KEY` | courier-service'in kurye konumlarını tuttuğu Redis GEO anahtarı (varsayılan `courier-locations`) |
+| `COURIER_ONLINE_KEY`, `COURIER_BUSY_KEY` | Çevrimiçi ve meşgul kuryelerin Redis set'leri (varsayılan `couriers:online`, `couriers:busy`) |
+| `RESTAURANT_LOCATIONS_KEY` | restaurant-service'in restoran konumlarını tuttuğu Redis GEO anahtarı (varsayılan `restaurant-locations`) |
 | `TEST_DATA_PREFIX` | Testlerin oluşturduğu tüm kayıtların başına eklenen prefix (varsayılan `e2e_test`); temizlik buna göre yapılır |
 | `TEST_EMAIL_DOMAIN` | Test kullanıcılarının e-posta domain'i |
 | `DEFAULT_PASSWORD` | Test kullanıcılarının şifresi |
@@ -74,7 +78,9 @@ e2e/
     menus.py             hazır restoran menüleri (restoran + kategori + ürünler)
     cleanup.py           test verisinin temizlenmesi
     courier_locations.py Redis'teki kurye konumlarını okuma ve temizleme
-    order_events.py      Kafka'daki sipariş olaylarını okuma
+    courier_availability.py Redis'teki çevrimiçi/meşgul kurye set'lerini okuma, yazma ve temizleme
+    restaurant_locations.py Redis'teki restoran konumlarını okuma ve temizleme
+    order_events.py      Kafka'daki sipariş id'siyle key'lenmiş olayları (order-events, dispatch-events) okuma
   tests/
     stories/             kullanıcı hikâyeleri; her hikâye bir dosya (test_sNN_<hikaye_adi>.py)
 ```
@@ -88,10 +94,13 @@ e2e/
 | `redis_client` | user-service Redis bağlantısı |
 | `user_api`, `restaurant_api` | Servis endpoint'lerine istek atan wrapper'lar; her metot ham `httpx.Response` döner. `restaurant_api` merchant'ın sipariş işlemlerini (listeleme, accept, prepare, ready-for-pickup, cancel) de içerir |
 | `order_api` | order-service'e (sepet ve sipariş) istek atan wrapper; sadece isteyen case'ler order-service'in ayakta olmasını gerektirir |
-| `menus` | `menus.create(merchant, is_open=True, prices=("99.90",))` ile API üzerinden restoran + kategori + fiyat başına bir ürün kurar; dönen `Menu` nesnesinde `restaurant`, `category`, `items`, `item` (ilk ürün) ve `restaurant_id` bulunur |
+| `menus` | `menus.create(merchant, is_open=True, prices=("99.90",), **restaurant_overrides)` ile API üzerinden restoran + kategori + fiyat başına bir ürün kurar; dönen `Menu` nesnesinde `restaurant`, `category`, `items`, `item` (ilk ürün) ve `restaurant_id` bulunur |
 | `courier_api` | courier-service'e doğrudan istek atan wrapper; sadece isteyen case'ler courier-service'in ayakta olmasını gerektirir |
 | `order_events` | Kafka'daki `order-events` topic'ini fixture oluşturulduğu andaki sondan itibaren okur; `for_order(order_id, count)` o siparişin olaylarını yayın sırasıyla döner. Sadece isteyen case'ler Kafka'nın ayakta olmasını gerektirir |
 | `courier_locations` | Redis'teki kurye konumlarını okur (`position(courier_id)` → `(lat, lon)` veya `None`); sorulan kuryelerin kayıtlarını case sonunda siler |
+| `courier_availability` | Kuryenin çevrimiçi/meşgul durumunu okur (`is_online`, `is_busy`); `mark_busy(courier_id)` kuryeyi doğrudan Redis'te meşgul yapar (henüz bunu yapan bir servis yok). Dokunulan kuryeleri case sonunda set'lerden siler |
+| `restaurant_locations` | Redis'teki restoran konumlarını okur (`position(restaurant_id)` → `(lat, lon)` veya `None`) |
+| `dispatch_events` | `order_events` ile aynı, ama dispatch-service'in `dispatch-events` topic'ini okur; dispatch-service ayakta değilse oturum durur. Sadece isteyen case'ler dispatch-service ve Kafka'nın ayakta olmasını gerektirir |
 | `gateway_client` | Gateway'e istek atan `ApiClient`; sadece isteyen case'ler gateway'in ayakta olmasını gerektirir |
 | `gateway_user_api` | `UserServiceApi` wrapper'ı, ama istekleri gateway üzerinden atar |
 | `gateway_courier_api` | `CourierServiceApi` wrapper'ı; istekleri gateway üzerinden courier-service'e atar |
@@ -159,7 +168,10 @@ Oturum başında (önceki koşulardan kalanlar için) ve sonunda her veritabanı
 - `order_db`: önce `user_db`'den prefix'li kullanıcıların id'leri okunur, bu kullanıcılara ait sepetler ve siparişler silinir (kalemleri cascade ile gider). Kullanıcılar silindikten sonra bu eşleşme kurulamayacağı için ilk bu adım çalışır.
 
 - `user_db`: prefix'li e-postaya sahip kullanıcılar silinir; profil (customer/courier/merchant) ve adresler cascade ile gider.
+- Redis `restaurant-locations`: prefix'li restoranların konum kayıtları silinir. Restoranlar silindikten sonra id'leri bulunamayacağı için `restaurant_db`'den önce çalışır.
 - `restaurant_db`: prefix'li isme sahip restoranlar (kategori ve ürünleriyle birlikte cascade), ardından başka bir üst kayda bağlı kalmış prefix'li kategori ve ürünler silinir.
+
+Kurye konumları ve çevrimiçi/meşgul set'leri ise case bazında, `courier_locations` ve `courier_availability` fixture'larının dokunduğu kuryeler için temizlenir.
 
 Eşleşme `starts_with()` ile yapılır (`LIKE` kullanılmaz, çünkü `_` orada joker karakterdir). Debug için `KEEP_TEST_DATA=true` ayarlanabilir.
 
@@ -225,4 +237,5 @@ Her hikâye bir veya birkaç aktörü baştan sona takip eder ve birden fazla se
 | # | Hikâye | Test dosyası | Durum |
 |---|---|---|---|
 | S13 | Sipariş olayları: sipariş verilip ready-for-pickup'a kadar ilerler; her adımda Kafka'daki `order-events` topic'ine doğru `previous_status` / `status` ile olay sırayla yayınlanır (`order.created` ardından üç `order.status_updated`; key sipariş id'si, `event_type` header'ı payload ile aynı) | `tests/stories/test_s13_order_events_on_kafka.py` | Yazıldı |
-| S14 | Dispatch: birkaç kurye konum paylaşır; sipariş ready-for-pickup olunca dispatch en yakın kuryeyi atar; kurye siparişi alır, sipariş on-the-way ve delivered olur. dispatch-service henüz iskelet olduğu için beklemede | | Planlandı |
+| S14 | Dispatch: birkaç kurye konum paylaşır; sipariş ready-for-pickup olunca dispatch en yakın kuryeyi atar; kurye siparişi alır, sipariş on-the-way ve delivered olur. dispatch-service henüz kurye atamadığı için beklemede | | Planlandı |
+| S17 | Dispatch kurye arar: merchant restoranını rastgele bir konumda açar (konum Redis'e yazılır); beş kurye etrafında konum paylaşır, biri çevrimdışı kalır, biri meşgul, biri 5 km dışındadır. Her ready-for-pickup siparişinde `dispatch-events` topic'ine tek bir `dispatch.courier_search_completed` olayı düşer: önce 2 km'de kimse olmadığı için 5 km'deki iki kurye en yakından sıralı gelir; yakın kurye çevrimiçi olunca sadece o (2 km); çevrimdışı olunca tekrar 5 km; restoran 20 km uzağa taşınınca kimse (`radius_km` `null`). Restoran silinince konumu Redis'ten kalkar | `tests/stories/test_s17_dispatch_searches_nearby_couriers.py` | Yazıldı |

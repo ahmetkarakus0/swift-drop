@@ -7,8 +7,8 @@ from confluent_kafka import Consumer, KafkaException, TopicPartition
 
 
 class OrderEvents:
-    """Reads order-service's Kafka topic starting from where it ends when the helper is created,
-    so a case only sees the events it caused."""
+    """Reads a Kafka topic whose messages are keyed by order id (order-service's or dispatch-service's),
+    starting from where it ends when the helper is created, so a case only sees the events it caused."""
 
     def __init__(self, bootstrap_servers: str, topic: str, timeout_seconds: float):
         self.topic = topic
@@ -18,16 +18,24 @@ class OrderEvents:
                 "bootstrap.servers": bootstrap_servers,
                 "group.id": f"e2e-{uuid.uuid4().hex}",
                 "enable.auto.commit": False,
+                # A topic only exists once its service has published to it; on a fresh broker this
+                # creates it, so the case still sees the first event.
+                "allow.auto.create.topics": True,
             }
         )
         self.consumer.assign(self._end_offsets())
         self._seen: list[dict[str, Any]] = []
 
     def _end_offsets(self) -> list[TopicPartition]:
-        metadata = self.consumer.list_topics(self.topic, timeout=self.timeout_seconds)
-        topic = metadata.topics.get(self.topic)
-        if topic is None or topic.error is not None or not topic.partitions:
-            raise KafkaException(f"Topic {self.topic} is not available")
+        deadline = time.monotonic() + self.timeout_seconds
+        while True:
+            metadata = self.consumer.list_topics(self.topic, timeout=self.timeout_seconds)
+            topic = metadata.topics.get(self.topic)
+            if topic is not None and topic.error is None and topic.partitions:
+                break
+            if time.monotonic() >= deadline:
+                raise KafkaException(f"Topic {self.topic} is not available")
+            time.sleep(0.5)
         positions = []
         for partition in topic.partitions:
             _, high = self.consumer.get_watermark_offsets(

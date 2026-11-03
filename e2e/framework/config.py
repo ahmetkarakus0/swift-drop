@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     RESTAURANT_SERVICE_URL: str = "http://127.0.0.1:8001"
     ORDER_SERVICE_URL: str = "http://127.0.0.1:8002"
     COURIER_SERVICE_URL: str = "http://127.0.0.1:8003"
+    DISPATCH_SERVICE_URL: str = "http://127.0.0.1:8004"
     GATEWAY_URL: str = "http://127.0.0.1:8080"
     HTTP_TIMEOUT_SECONDS: float = 10.0
 
@@ -25,8 +26,12 @@ class Settings(BaseSettings):
     ORDER_DB_URL: str
     REDIS_URL: str
     COURIER_LOCATIONS_KEY: str = "courier-locations"
+    COURIER_ONLINE_KEY: str = "couriers:online"
+    COURIER_BUSY_KEY: str = "couriers:busy"
+    RESTAURANT_LOCATIONS_KEY: str = "restaurant-locations"
     KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
     KAFKA_ORDER_EVENTS_TOPIC: str = "order-events"
+    KAFKA_DISPATCH_EVENTS_TOPIC: str = "dispatch-events"
     KAFKA_TIMEOUT_SECONDS: float = 10.0
 
     TEST_DATA_PREFIX: str = "e2e_test"

@@ -28,12 +28,18 @@ class Menus:
     def __init__(self, restaurant_api: RestaurantServiceApi):
         self.restaurant_api = restaurant_api
 
-    def create(self, merchant: Actor, *, is_open: bool = True, prices: tuple[str, ...] = ("99.90",)) -> Menu:
+    def create(
+        self,
+        merchant: Actor,
+        *,
+        is_open: bool = True,
+        prices: tuple[str, ...] = ("99.90",),
+        **restaurant_overrides: Any,
+    ) -> Menu:
         """One restaurant with one category holding an item per price."""
         token = merchant.access_token
-        restaurant = expect_status(
-            self.restaurant_api.create_restaurant(token, data.restaurant_payload(is_open=is_open)), 201
-        ).json()
+        payload = data.restaurant_payload(is_open=is_open, **restaurant_overrides)
+        restaurant = expect_status(self.restaurant_api.create_restaurant(token, payload), 201).json()
         category = expect_status(
             self.restaurant_api.create_category(token, restaurant["id"], data.category_payload()), 201
         ).json()

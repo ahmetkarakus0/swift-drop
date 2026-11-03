@@ -86,6 +86,8 @@ def restaurant_payload(**overrides: Any) -> dict[str, Any]:
         "postal_code": "34710",
         "address_line1": "E2E Street No: 2",
         "address_line2": None,
+        "latitude": 40.9869,
+        "longitude": 29.0265,
         "is_open": False,
         **overrides,
     }

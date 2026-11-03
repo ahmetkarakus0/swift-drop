@@ -70,6 +70,12 @@ class CourierServiceApi:
             "/api/couriers/location", token=token, json={"latitude": latitude, "longitude": longitude}
         )
 
+    def go_online(self, token: str) -> httpx.Response:
+        return self.client.put("/api/couriers/online", token=token)
+
+    def go_offline(self, token: str) -> httpx.Response:
+        return self.client.put("/api/couriers/offline", token=token)
+
 
 class RestaurantServiceApi:
     def __init__(self, client: ApiClient):

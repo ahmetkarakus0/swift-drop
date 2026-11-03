@@ -9,11 +9,13 @@ from sqlalchemy.exc import OperationalError
 from framework.actors import Actors
 from framework.cleanup import cleanup_test_data
 from framework.config import Settings, get_settings
+from framework.courier_availability import CourierAvailability
 from framework.courier_locations import CourierLocations
 from framework.db import Database
 from framework.http_client import ApiClient
 from framework.menus import Menus
 from framework.order_events import OrderEvents
+from framework.restaurant_locations import RestaurantLocations
 from framework.services import CourierServiceApi, OrderServiceApi, RestaurantServiceApi, UserServiceApi
 
 
@@ -150,14 +152,43 @@ def courier_locations(redis_client: Redis, settings: Settings) -> Iterator[Couri
 
 
 @pytest.fixture
+def courier_availability(redis_client: Redis, settings: Settings) -> Iterator[CourierAvailability]:
+    availability = CourierAvailability(redis_client, settings.COURIER_ONLINE_KEY, settings.COURIER_BUSY_KEY)
+    yield availability
+    if not settings.KEEP_TEST_DATA:
+        availability.cleanup()
+
+
+@pytest.fixture(scope="session")
+def restaurant_locations(redis_client: Redis, settings: Settings) -> RestaurantLocations:
+    return RestaurantLocations(redis_client, settings.RESTAURANT_LOCATIONS_KEY)
+
+
+def _topic_events(settings: Settings, topic: str) -> OrderEvents:
+    try:
+        return OrderEvents(settings.KAFKA_BOOTSTRAP_SERVERS, topic, settings.KAFKA_TIMEOUT_SECONDS)
+    except KafkaException as exc:
+        pytest.fail(f"Cannot read {topic} from Kafka: {exc}")
+
+
+@pytest.fixture
 def order_events(settings: Settings) -> Iterator[OrderEvents]:
     """Only requested by event cases, so the rest of the suite runs without Kafka."""
-    try:
-        events = OrderEvents(
-            settings.KAFKA_BOOTSTRAP_SERVERS, settings.KAFKA_ORDER_EVENTS_TOPIC, settings.KAFKA_TIMEOUT_SECONDS
-        )
-    except KafkaException as exc:
-        pytest.fail(f"Cannot read {settings.KAFKA_ORDER_EVENTS_TOPIC} from Kafka: {exc}")
+    events = _topic_events(settings, settings.KAFKA_ORDER_EVENTS_TOPIC)
+    yield events
+    events.close()
+
+
+@pytest.fixture(scope="session")
+def dispatch_service(settings: Settings) -> None:
+    """dispatch-service has no endpoints the cases call; this only checks that it is running."""
+    _service_client(settings.DISPATCH_SERVICE_URL, "dispatch-service", settings.HTTP_TIMEOUT_SECONDS).close()
+
+
+@pytest.fixture
+def dispatch_events(settings: Settings, dispatch_service: None) -> Iterator[OrderEvents]:
+    """dispatch-service's events, keyed by order id. Only requested by dispatch cases."""
+    events = _topic_events(settings, settings.KAFKA_DISPATCH_EVENTS_TOPIC)
     yield events
     events.close()
 
@@ -174,12 +205,16 @@ def menus(restaurant_api: RestaurantServiceApi) -> Menus:
 
 @pytest.fixture(scope="session", autouse=True)
 def _clean_test_data(
-    settings: Settings, user_db: Database, restaurant_db: Database, order_db: Database
+    settings: Settings,
+    user_db: Database,
+    restaurant_db: Database,
+    order_db: Database,
+    restaurant_locations: RestaurantLocations,
 ) -> Iterator[None]:
     """Removes leftovers from previous runs before the session and this run's data after it."""
     if settings.KEEP_TEST_DATA:
         yield
         return
-    cleanup_test_data(user_db, restaurant_db, order_db, settings.TEST_DATA_PREFIX)
+    cleanup_test_data(user_db, restaurant_db, order_db, restaurant_locations, settings.TEST_DATA_PREFIX)
     yield
-    cleanup_test_data(user_db, restaurant_db, order_db, settings.TEST_DATA_PREFIX)
+    cleanup_test_data(user_db, restaurant_db, order_db, restaurant_locations, settings.TEST_DATA_PREFIX)
